@@ -47,6 +47,19 @@ void ofApp::update() {
 		updateRenderMode();
 		cam.disableMouseInput();
 	}
+
+	if (getb("loadCalibration")) {
+		loadCalibration();
+		setb("loadCalibration", false);
+	}
+	if (getb("saveCalibration")) {
+		saveCalibration();
+		setb("saveCalibration", false);
+	}
+	if (getb("resetCalibration")) {
+		resetCalibration();
+		setb("resetCalibration", false);
+	}
 }
 
 void enableFog(float nearFog, float farFog) {
@@ -65,14 +78,6 @@ void disableFog() {
 
 void ofApp::draw() {
 	ofBackground(geti("backgroundColor"));
-    if(getb("loadCalibration")) {
-		loadCalibration();
-		setb("loadCalibration", false);
-	}
-	if(getb("saveCalibration")) {
-		saveCalibration();
-		setb("saveCalibration", false);
-	}
 
 	string message = "";
 
@@ -308,7 +313,7 @@ void ofApp::loadCalibration() {
     // load objectPoints and imagePoints
     
     Mat objPointsMat, imgPointsMat;
-	ofFile objPointsFile(calibPath + "/objectPoints.yml");
+    ofFile objPointsFile(calibPath + "/objectPoints.yml");
 	ofFile imgPointsFile(calibPath + "/imagePoints.yml");
 	ofFile calibrationFile(calibPath + "/calibration-advanced.yml");
 	if (!objPointsFile.exists() || !imgPointsFile.exists() || !calibrationFile.exists()) {
@@ -369,6 +374,15 @@ void ofApp::loadCalibration() {
 	}
 }
 
+void ofApp::resetCalibration() {
+	int n = referencePoints.size();
+	for (int i = 0; i < n; i++) {
+		referencePoints[i] = false;
+		imagePoints[i] = Point2f();
+	}
+	calibrationReady = false;
+}
+
 void ofApp::setupControlPanel() {
 	panel.setup();
 	panel.msg = "tab hides the panel, space toggles render/selection mode, 'f' toggles fullscreen.";
@@ -380,7 +394,8 @@ void ofApp::setupControlPanel() {
 	panel.addMultiToggle("shading", 0, variadic("none")("lights")("shader"));
 	panel.addToggle("loadCalibration", false);
 	panel.addToggle("saveCalibration", false);
-		
+	panel.addToggle("resetCalibration", false);
+
 	panel.addPanel("Calibration");
 	panel.addSlider("scale", 1, .1, 25);
 	panel.addSlider("aov", 80, 50, 100);

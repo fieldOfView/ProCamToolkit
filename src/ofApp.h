@@ -33,7 +33,8 @@ public:
 	void render();
     void loadCalibration();
 	void saveCalibration();
-	
+	void resetCalibration();
+
 	ofxAssimpModelLoader model;	
 	ofEasyCam cam;
 	ofVboMesh objectMesh;
