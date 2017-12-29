@@ -26,7 +26,7 @@ public:
 	
 	void setupControlPanel();
 	void setupMesh(string fileName);
-	void drawLabeledPoint(int label, ofVec2f position, ofColor color, ofColor bg = ofColor::black, ofColor fg = ofColor::white);
+	void drawLabeledPoint(int label, ofVec2f position, ofColor color, bool crossHair = true, ofColor bg = ofColor::black, ofColor fg = ofColor::white);
 	void updateRenderMode();
 	void drawSelectionMode();
 	void drawRenderMode();

@@ -461,17 +461,19 @@ void ofApp::updateRenderMode() {
 	}
 }
 
-void ofApp::drawLabeledPoint(int label, ofVec2f position, ofColor color, ofColor bg, ofColor fg) {
+void ofApp::drawLabeledPoint(int label, ofVec2f position, ofColor color, bool crossHair, ofColor bg, ofColor fg) {
 	glPushAttrib(GL_DEPTH_BUFFER_BIT);
 	glDisable(GL_DEPTH_TEST);
 	//glEnable(GL_DEPTH_TEST);
 	ofVec2f tooltipOffset(5, -25);
 	ofSetColor(color);
-	float w = ofGetWidth();
-	float h = ofGetHeight();
 	ofSetLineWidth(1);
-	ofLine(position - ofVec2f(w,0), position + ofVec2f(w,0));
-	ofLine(position - ofVec2f(0,h), position + ofVec2f(0,h));
+	if (crossHair) {
+		float w = ofGetWidth();
+		float h = ofGetHeight();
+		ofLine(position - ofVec2f(w, 0), position + ofVec2f(w, 0));
+		ofLine(position - ofVec2f(0, h), position + ofVec2f(0, h));
+	}
 	ofCircle(position, geti("selectedPointSize"));
 	ofDrawBitmapStringHighlight(ofToString(label), position + tooltipOffset, bg, fg);
 	glPopAttrib();
@@ -505,7 +507,7 @@ void ofApp::drawSelectionMode() {
 		int n = referencePoints.size();
 		for(int i = 0; i < n; i++) {
 			if(referencePoints[i]) {
-				drawLabeledPoint(i, imageMesh.getVertex(i), cyanPrint);
+				drawLabeledPoint(i, imageMesh.getVertex(i), cyanPrint, false);
 			}
 		}
 		
@@ -526,7 +528,7 @@ void ofApp::drawSelectionMode() {
 		if(hasSelection) {
 			int index = selectedIndex;
 			ofVec2f selected = imageMesh.getVertex(index);
-			drawLabeledPoint(index, selected, yellowPrint, ofColor::white, ofColor::black);
+			drawLabeledPoint(index, selected, yellowPrint, true, ofColor::white, ofColor::black);
 		}
 	}
 }
@@ -556,7 +558,7 @@ void ofApp::drawRenderMode() {
 		int n = referencePoints.size();
 		for(int i = 0; i < n; i++) {
 			if(referencePoints[i]) {
-				drawLabeledPoint(i, toOf(imagePoints[i]), cyanPrint);
+				drawLabeledPoint(i, toOf(imagePoints[i]), cyanPrint, false);
 			}
 		}
 		
@@ -578,12 +580,12 @@ void ofApp::drawRenderMode() {
 			Point2f& cur = imagePoints[index];
 			float rate = ofGetMousePressed(0) ? getf("slowLerpRate") : getf("fastLerpRate");
 			cur = Point2f(ofLerp(cur.x, mouseX, rate), ofLerp(cur.y, mouseY, rate));
-			drawLabeledPoint(index, toOf(cur), yellowPrint, ofColor::white, ofColor::black);
+			drawLabeledPoint(index, toOf(cur), yellowPrint, true, ofColor::white, ofColor::black);
 			ofSetColor(ofColor::black);
 			ofRect(toOf(cur), 1, 1);
 		} else if(isArrowing) {
 			Point2f& cur = imagePoints[index];
-			drawLabeledPoint(index, toOf(cur), yellowPrint, ofColor::white, ofColor::black);
+			drawLabeledPoint(index, toOf(cur), yellowPrint, true, ofColor::white, ofColor::black);
 			ofSetColor(ofColor::black);
 			ofRect(toOf(cur), 1, 1);
         } else {
