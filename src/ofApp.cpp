@@ -115,8 +115,8 @@ void ofApp::draw() {
 void ofApp::keyPressed(int key) {
 	if(key == OF_KEY_LEFT || key == OF_KEY_UP || key == OF_KEY_RIGHT|| key == OF_KEY_DOWN){
 		int index = selectedIndex;
-		isArrowing = true;
 		if(index > 0){
+			isArrowing = true;
 			Point2f& cur = imagePoints[index];
 			switch(key) {
 				case OF_KEY_LEFT: cur.x -= 1; break;
@@ -124,6 +124,7 @@ void ofApp::keyPressed(int key) {
 				case OF_KEY_UP: cur.y -= 1; break;
 				case OF_KEY_DOWN: cur.y += 1; break;
 			}
+			dataChanged = true;
 		}
 	} else {
 		isArrowing = false;
@@ -134,6 +135,7 @@ void ofApp::keyPressed(int key) {
 			int index = selectedIndex;
 			referencePoints[index] = false;
 			imagePoints[index] = Point2f();
+			dataChanged = true;
 		}
 	}
 	if(key == '\n') { // deselect
@@ -170,6 +172,7 @@ void ofApp::setupMesh(string fileName) {
 	for(int i = 0; i < n; i++) {
 		objectPoints[i] = toCv(objectMesh.getVertex(i));
 	}
+	dataChanged = true;
 }
 
 void ofApp::render() {
@@ -233,74 +236,23 @@ void ofApp::saveCalibration() {
 	ofDirectory dir(dirName);
 	dir.create();
 
-	FileStorage fs(ofToDataPath(dirName + "calibration-advanced.yml"), FileStorage::WRITE);
+	mapamok.save(dirName + "calibration.yml", dirName + "summary.txt");
 
-	Mat cameraMatrix = intrinsics.getCameraMatrix();
-	fs << "cameraMatrix" << cameraMatrix;
-
-	double focalLength = intrinsics.getFocalLength();
-	fs << "focalLength" << focalLength;
-
-	Point2d fov = intrinsics.getFov();
-	fs << "fov" << fov;
-
-	Point2d principalPoint = intrinsics.getPrincipalPoint();
-	fs << "principalPoint" << principalPoint;
-
-	cv::Size imageSize = intrinsics.getImageSize();
-	fs << "imageSize" << imageSize;
-
-	fs << "translationVector" << tvec;
-	fs << "rotationVector" << rvec;
-
-	Mat rotationMatrix;
-	Rodrigues(rvec, rotationMatrix);
-	fs << "rotationMatrix" << rotationMatrix;
-
-	double rotationAngleRadians = norm(rvec, NORM_L2);
-	double rotationAngleDegrees = ofRadToDeg(rotationAngleRadians);
-	Mat rotationAxis = rvec / rotationAngleRadians;
-	fs << "rotationAngleRadians" << rotationAngleRadians;
-	fs << "rotationAngleDegrees" << rotationAngleDegrees;
-	fs << "rotationAxis" << rotationAxis;
-
-	ofVec3f axis(rotationAxis.at<double>(0), rotationAxis.at<double>(1), rotationAxis.at<double>(2));
-	ofVec3f euler = ofQuaternion(rotationAngleDegrees, axis).getEuler();
-	Mat eulerMat = (Mat_<double>(3,1) << euler.x, euler.y, euler.z);
-	fs << "euler" << eulerMat;
-
-	ofFile basic("calibration-basic.txt", ofFile::WriteOnly);
-	ofVec3f position( tvec.at<double>(1), tvec.at<double>(2));
-	basic << "position (in world units):" << endl;
-	basic << "\tx: " << ofToString(tvec.at<double>(0), 2) << endl;
-	basic << "\ty: " << ofToString(tvec.at<double>(1), 2) << endl;
-	basic << "\tz: " << ofToString(tvec.at<double>(2), 2) << endl;
-	basic << "axis-angle rotation (in degrees):" << endl;
-	basic << "\taxis x: " << ofToString(axis.x, 2) << endl;
-	basic << "\taxis y: " << ofToString(axis.y, 2) << endl;
-	basic << "\taxis z: " << ofToString(axis.z, 2) << endl;
-	basic << "\tangle: " << ofToString(rotationAngleDegrees, 2) << endl;
-	basic << "euler rotation (in degrees):" << endl;
-	basic << "\tx: " << ofToString(euler.x, 2) << endl;
-	basic << "\ty: " << ofToString(euler.y, 2) << endl;
-	basic << "\tz: " << ofToString(euler.z, 2) << endl;
-	basic << "fov (in degrees):" << endl;
-	basic << "\thorizontal: " << ofToString(fov.x, 2) << endl;
-	basic << "\tvertical: " << ofToString(fov.y, 2) << endl;
-	basic << "principal point (in screen units):" << endl;
-	basic << "\tx: " << ofToString(principalPoint.x, 2) << endl;
-	basic << "\ty: " << ofToString(principalPoint.y, 2) << endl;
-	basic << "image size (in pixels):" << endl;
-	basic << "\tx: " << ofToString(principalPoint.x, 2) << endl;
-	basic << "\ty: " << ofToString(principalPoint.y, 2) << endl;
-
-	saveMat(Mat(objectPoints), dirName + "objectPoints.yml");
-	saveMat(Mat(imagePoints), dirName + "imagePoints.yml");
+	FileStorage fs(ofToDataPath(dirName + "pointdata.yml"), FileStorage::WRITE);
+	if (!fs.isOpened()) {
+		ofLogError() << "could not open calibration file for writing";
+		return;
+	}
+	vector<unsigned char> referencePointsChar;
+	for (auto const& refPoint : referencePoints) {
+		referencePointsChar.push_back(refPoint);
+	}
+	fs << "objectPoints" << objectPoints;
+	fs << "imagePoints" << imagePoints;
+	fs << "referencePoints" << referencePointsChar;
 }
 
 void ofApp::loadCalibration() {
-
-	// retrieve advanced calibration folder
 
 	string calibPath;
 	ofFileDialogResult result = ofSystemLoadDialog("Select a calibration folder", true, ofToDataPath("", true));
@@ -310,68 +262,27 @@ void ofApp::loadCalibration() {
 	}
 	calibPath = result.getPath();
 
-	// load objectPoints and imagePoints
-
-	Mat objPointsMat, imgPointsMat;
-	ofFile objPointsFile(calibPath + "/objectPoints.yml");
-	ofFile imgPointsFile(calibPath + "/imagePoints.yml");
-	ofFile calibrationFile(calibPath + "/calibration-advanced.yml");
-	if (!objPointsFile.exists() || !imgPointsFile.exists() || !calibrationFile.exists()) {
+	ofFile pointDataFile(calibPath + "/pointdata.yml");
+	ofFile calibrationFile(calibPath + "/calibration.yml");
+	if (!pointDataFile.exists() || !calibrationFile.exists()) {
 		ofLogError() << "calibration files not found in folder";
 		return;
 	}
 
-	loadMat( objPointsMat, calibPath + "/objectPoints.yml");
-	loadMat( imgPointsMat, calibPath + "/imagePoints.yml");
+	FileStorage fs(ofToDataPath(calibPath + "/pointdata.yml", true), FileStorage::READ);
+	vector<unsigned char> referencePointsChar;
 
-	int numVals;
-	cv::Point3f oP;
+	fs["objectPoints"] >> objectPoints;
+	fs["imagePoints"] >> imagePoints;
+	fs["referencePoints"] >> referencePointsChar;
 
-	const float* objVals = objPointsMat.ptr<float>(0);
-	numVals = objPointsMat.cols * objPointsMat.rows;
-
-	for(int i = 0; i < numVals; i+=3) {
-		oP.x = objVals[i];
-		oP.y = objVals[i+1];
-		oP.z = objVals[i+2];
-		objectPoints[i/3] = oP;
+	referencePoints.clear();
+	for (auto const& refPoint : referencePointsChar) {
+		referencePoints.push_back(refPoint);
 	}
 
-	cv::Point2f iP;
-
-	referencePoints.resize( (imgPointsMat.cols * imgPointsMat.rows ) / 2, false);
-
-	const float* imgVals = imgPointsMat.ptr<float>(0);
-	numVals = objPointsMat.cols * objPointsMat.rows;
-
-	for(int i = 0; i < numVals; i+=2) {
-		iP.x = imgVals[i];
-		iP.y = imgVals[i+1];
-		if(iP.x != 0 && iP.y != 0) {
-			referencePoints[i/2] = true;
-		}
-		imagePoints[i/2] = iP;
-	}
-
-	// load the calibration-advanced yml
-	FileStorage fs(ofToDataPath(calibPath + "/calibration-advanced.yml", true), FileStorage::READ);
-
-	Mat cameraMatrix;
-	Size2i imageSize;
-	fs["cameraMatrix"] >> cameraMatrix;
-	fs["imageSize"][0] >> imageSize.width;
-	fs["imageSize"][1] >> imageSize.height;
-	fs["rotationVector"] >> rvec;
-	fs["translationVector"] >> tvec;
-
-	if (imageSize.width != 0 && imageSize.height != 0) {
-		intrinsics.setup(cameraMatrix, imageSize);
-		modelMatrix = makeMatrix(rvec, tvec);
-
-		calibrationReady = true;
-	} else {
-		ofLogError() << "calibration does not contain image size";
-	}
+	mapamok.load(calibPath + "/calibration.yml");
+	dataChanged = false;
 }
 
 void ofApp::resetCalibration() {
@@ -380,7 +291,7 @@ void ofApp::resetCalibration() {
 		referencePoints[i] = false;
 		imagePoints[i] = Point2f();
 	}
-	calibrationReady = false;
+	mapamok.reset();
 }
 
 void ofApp::setupControlPanel() {
@@ -427,15 +338,7 @@ void ofApp::setupControlPanel() {
 }
 
 void ofApp::updateRenderMode() {
-	// generate camera matrix given aov guess
 	float aov = getf("aov");
-	Size2i imageSize(ofGetWidth(), ofGetHeight());
-	float f = imageSize.width * ofDegToRad(aov); // i think this is wrong, but it's optimized out anyway
-	Point2f c = Point2f(imageSize) * (1. / 2);
-	Mat1d cameraMatrix = (Mat1d(3, 3) <<
-		f, 0, c.x,
-		0, f, c.y,
-		0, 0, 1);
 
 	// generate flags
 	#define getFlag(flag) (panel.getValueB((#flag)) ? flag : 0)
@@ -448,27 +351,9 @@ void ofApp::updateRenderMode() {
 		getFlag(CV_CALIB_FIX_K3) |
 		getFlag(CV_CALIB_ZERO_TANGENT_DIST);
 
-	vector<Mat> rvecs, tvecs;
-	Mat distCoeffs;
-	vector<vector<Point3f> > referenceObjectPoints(1);
-	vector<vector<Point2f> > referenceImagePoints(1);
-	int n = referencePoints.size();
-	for(int i = 0; i < n; i++) {
-		if(referencePoints[i]) {
-			referenceObjectPoints[0].push_back(objectPoints[i]);
-			referenceImagePoints[0].push_back(imagePoints[i]);
-		}
-	}
-	const static int minPoints = 6;
-	if(referenceObjectPoints[0].size() >= minPoints) {
-		calibrateCamera(referenceObjectPoints, referenceImagePoints, imageSize, cameraMatrix, distCoeffs, rvecs, tvecs, flags);
-		rvec = rvecs[0];
-		tvec = tvecs[0];
-		intrinsics.setup(cameraMatrix, imageSize);
-		modelMatrix = makeMatrix(rvec, tvec);
-		calibrationReady = true;
-	} else {
-		calibrationReady = false;
+	if (dataChanged) {
+		mapamok.calibrate(ofGetWidth(), ofGetHeight(), imagePoints, objectPoints, referencePoints, flags, aov);
+		dataChanged = false;
 	}
 }
 
@@ -548,24 +433,16 @@ void ofApp::drawSelectionMode() {
 }
 
 void ofApp::drawRenderMode() {
-	glPushMatrix();
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glMatrixMode(GL_MODELVIEW);
+	mapamok.begin();
 
-	if(calibrationReady) {
-		intrinsics.loadProjectionMatrix(10, 2000);
-		applyMatrix(modelMatrix);
+	if(mapamok.calibrationReady) {
 		render();
 		if(getb("setupMode")) {
 			imageMesh = getProjectedMesh(objectMesh);
 		}
 	}
 
-	glPopMatrix();
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
+	mapamok.end();
 
 	if(getb("setupMode")) {
 		// draw all reference points cyan
@@ -583,12 +460,13 @@ void ofApp::drawRenderMode() {
 			referencePoints[index] = true;
 			Point2f& cur = imagePoints[index];
 			if(cur == Point2f()) {
-				if(calibrationReady) {
+				if(mapamok.calibrationReady) {
 					cur = toCv(ofVec2f(imageMesh.getVertex(index)));
 				} else {
 					cur = Point2f(mouseX, mouseY);
 				}
 			}
+			dataChanged = true;
 		}
 		if(hasSelection) {
 			Point2f& cur = imagePoints[index];

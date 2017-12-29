@@ -5,6 +5,7 @@
 #include "ofxAssimpModelLoader.h"
 #include "ofxProCamToolkit.h"
 #include "ofxAutoControlPanel.h"
+#include "Mapamok.h"
 #include "LineArt.h"
 #include "AutoShader.h"
 
@@ -35,6 +36,7 @@ public:
 	void saveCalibration();
 	void resetCalibration();
 
+	Mapamok mapamok;
 	ofxAssimpModelLoader model;
 	ofEasyCam cam;
 	ofVboMesh objectMesh;
@@ -46,11 +48,6 @@ public:
 	vector<cv::Point2f> imagePoints;
 	vector<bool> referencePoints;
 
-	cv::Mat rvec, tvec;
-	ofMatrix4x4 modelMatrix;
-	ofxCv::Intrinsics intrinsics;
-	bool calibrationReady = false;
-
 	AutoShader shader;
 
 private:
@@ -60,4 +57,6 @@ private:
 	bool isHovering = false;
 	unsigned int hoveredIndex;
 	unsigned int selectedIndex;
+
+	bool dataChanged = false;
 };
