@@ -87,7 +87,7 @@ void ofApp::draw() {
 		center /= 2;
 		center.x -= message.size() * 8 / 2;
 		center.y -= 8;
-		drawHighlightString(message, center);
+		ofDrawBitmapStringHighlight(message, center);
 		ofPopStyle();
 	}
 }
@@ -184,8 +184,8 @@ void ofApp::render() {
 	glEnable(GL_DEPTH_TEST);
 	if(useShader) {
 		ofFile fragFile("shader.frag"), vertFile("shader.vert");
-		Poco::Timestamp fragTimestamp = fragFile.getPocoFile().getLastModified();
-		Poco::Timestamp vertTimestamp = vertFile.getPocoFile().getLastModified();
+		uint64_t fragTimestamp = filesystem::last_write_time(fragFile);
+		uint64_t vertTimestamp = filesystem::last_write_time(vertFile);
 		if(fragTimestamp != lastFragTimestamp || vertTimestamp != lastVertTimestamp) {
 			bool validShader = shader.load("shader");
 			setb("validShader", validShader);
@@ -470,7 +470,7 @@ void ofApp::drawLabeledPoint(int label, ofVec2f position, ofColor color, ofColor
 	ofLine(position - ofVec2f(w,0), position + ofVec2f(w,0));
 	ofLine(position - ofVec2f(0,h), position + ofVec2f(0,h));
 	ofCircle(position, geti("selectedPointSize"));
-	drawHighlightString(ofToString(label), position + tooltipOffset, bg, fg);
+	ofDrawBitmapStringHighlight(ofToString(label), position + tooltipOffset, bg, fg);
 	glPopAttrib();
 }
 	
