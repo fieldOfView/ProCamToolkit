@@ -310,7 +310,6 @@ void ofApp::loadCalibration() {
     loadMat( imgPointsMat, calibPath + "/imagePoints.yml");
     
     int numVals;
-    float x, y, z;
     cv::Point3f oP;
     
     const float* objVals = objPointsMat.ptr<float>(0);
@@ -386,7 +385,7 @@ void ofApp::setupControlPanel() {
 	panel.addToggle("CV_CALIB_FIX_PRINCIPAL_POINT", false);
 	
 	panel.addPanel("Rendering");
-	panel.addSlider("lineWidth", 2, 1, 8, true);
+	panel.addSlider("lineWidth", 1, 1, 8, true);
 	panel.addToggle("useSmoothing", false);
 	panel.addToggle("useFog", false);
 	panel.addSlider("fogNear", 200, 0, 1000);
@@ -466,7 +465,7 @@ void ofApp::drawLabeledPoint(int label, ofVec2f position, ofColor color, ofColor
 	ofSetColor(color);
 	float w = ofGetWidth();
 	float h = ofGetHeight();
-	ofSetLineWidth(1.5);
+	ofSetLineWidth(1);
 	ofLine(position - ofVec2f(w,0), position + ofVec2f(w,0));
 	ofLine(position - ofVec2f(0,h), position + ofVec2f(0,h));
 	ofCircle(position, geti("selectedPointSize"));
