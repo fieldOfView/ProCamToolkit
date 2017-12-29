@@ -374,8 +374,7 @@ void ofApp::setupControlPanel() {
 	
 	panel.addPanel("Interaction");
 	panel.addToggle("setupMode", true);
-	panel.addSlider("scale", 1, .1, 25);
-	panel.addSlider("backgroundColor", 0, 0, 255, true);
+	panel.addToggle("selectionMode", true);
 	panel.addMultiToggle("drawMode", 3, variadic("faces")("fullWireframe")("outlineWireframe")("occludedWireframe"));
 	panel.addMultiToggle("shading", 0, variadic("none")("lights")("shader"));
 	panel.addToggle("loadCalibration", false);
@@ -387,6 +386,7 @@ void ofApp::setupControlPanel() {
 	panel.addSlider("highlightOffset", .1, 0, 1);
 	
 	panel.addPanel("Calibration");
+	panel.addSlider("scale", 1, .1, 25);
 	panel.addSlider("aov", 80, 50, 100);
 	panel.addToggle("CV_CALIB_FIX_ASPECT_RATIO", true);
 	panel.addToggle("CV_CALIB_FIX_K1", true);
@@ -401,6 +401,7 @@ void ofApp::setupControlPanel() {
 	panel.addToggle("useFog", false);
 	panel.addSlider("fogNear", 200, 0, 1000);
 	panel.addSlider("fogFar", 1850, 0, 2500);
+	panel.addSlider("backgroundColor", 0, 0, 255, true);
 	panel.addSlider("screenPointSize", 2, 1, 16, true);
 	panel.addSlider("selectedPointSize", 8, 1, 16, true);
 	panel.addSlider("selectionRadius", 12, 1, 32);
@@ -410,7 +411,6 @@ void ofApp::setupControlPanel() {
 	panel.addToggle("randomLighting", false);
 	
 	panel.addPanel("Internal");
-	panel.addToggle("selectionMode", true);
 	panel.addSlider("slowLerpRate", .001, 0, .01);
 	panel.addSlider("fastLerpRate", 1, 0, 1);
 }
