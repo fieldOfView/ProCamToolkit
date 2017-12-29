@@ -185,19 +185,6 @@ void ofApp::render() {
 		glEnable(GL_NORMALIZE);
 	}
 	
-	if(getb("highlight")) {
-		objectMesh.clearColors();
-		int n = objectMesh.getNumVertices();
-		float highlightPosition = getf("highlightPosition");
-		float highlightOffset = getf("highlightOffset");
-		for(int i = 0; i < n; i++) {
-			int lower = ofMap(highlightPosition - highlightOffset, 0, 1, 0, n);
-			int upper = ofMap(highlightPosition + highlightOffset, 0, 1, 0, n);
-			ofColor cur = (lower < i && i < upper) ? ofColor::white : ofColor::black;
-			objectMesh.addColor(cur);
-		}
-	}
-	
 	ofSetColor(255);
 	glPushAttrib(GL_ALL_ATTRIB_BITS);
 	glEnable(GL_DEPTH_TEST);
@@ -379,12 +366,7 @@ void ofApp::setupControlPanel() {
 	panel.addMultiToggle("shading", 0, variadic("none")("lights")("shader"));
 	panel.addToggle("loadCalibration", false);
 	panel.addToggle("saveCalibration", false);
-	
-	panel.addPanel("Highlight");
-	panel.addToggle("highlight", false);
-	panel.addSlider("highlightPosition", 0, 0, 1);
-	panel.addSlider("highlightOffset", .1, 0, 1);
-	
+		
 	panel.addPanel("Calibration");
 	panel.addSlider("scale", 1, .1, 25);
 	panel.addSlider("aov", 80, 50, 100);
