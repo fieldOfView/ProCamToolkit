@@ -23,15 +23,17 @@ float ofApp::getf(string name) {
 }
 
 void ofApp::setup() {
+	ofSetWindowTitle("mapamok");
 	ofSetDrawBitmapMode(OF_BITMAPMODE_MODEL_BILLBOARD);
 	ofSetVerticalSync(true);
 	calibrationReady = false;
 	setupMesh();	
 	setupControlPanel();
+
+	shader.setup("shader");
 }
 
 void ofApp::update() {
-	ofSetWindowTitle("mapamok");
 	if(getb("randomLighting")) {
 		setf("lightX", ofSignedNoise(ofGetElapsedTimef(), 1, 1) * 1000);
 		setf("lightY", ofSignedNoise(1, ofGetElapsedTimef(), 1) * 1000);
@@ -76,7 +78,7 @@ void ofApp::draw() {
 	} else {
 		drawRenderMode();
 	}
-	if(!getb("validShader")) {
+	if(!shader.isLoaded()) {
 		ofPushStyle();
 		ofSetColor(magentaPrint);
 		ofSetLineWidth(8);
@@ -182,21 +184,13 @@ void ofApp::render() {
 	ofSetColor(255);
 	glPushAttrib(GL_ALL_ATTRIB_BITS);
 	glEnable(GL_DEPTH_TEST);
-	if(useShader) {
-		ofFile fragFile("shader.frag"), vertFile("shader.vert");
-		uint64_t fragTimestamp = filesystem::last_write_time(fragFile);
-		uint64_t vertTimestamp = filesystem::last_write_time(vertFile);
-		if(fragTimestamp != lastFragTimestamp || vertTimestamp != lastVertTimestamp) {
-			bool validShader = shader.load("shader");
-			setb("validShader", validShader);
-		}
-		lastFragTimestamp = fragTimestamp;
-		lastVertTimestamp = vertTimestamp;
-		
+
+	if(useShader) {		
 		shader.begin();
 		shader.setUniform1f("elapsedTime", ofGetElapsedTimef());
 		shader.end();
 	}
+
 	ofColor transparentBlack(0, 0, 0, 0);
 	switch(geti("drawMode")) {
 		case 0: // faces
@@ -399,7 +393,6 @@ void ofApp::setupControlPanel() {
 	panel.addToggle("randomLighting", false);
 	
 	panel.addPanel("Internal");
-	panel.addToggle("validShader", true);
 	panel.addToggle("selectionMode", true);
 	panel.addToggle("hoverSelected", false);
 	panel.addSlider("hoverChoice", 0, 0, objectPoints.size(), true);

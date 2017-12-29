@@ -6,6 +6,7 @@
 #include "ofxProCamToolkit.h"
 #include "ofxAutoControlPanel.h"
 #include "LineArt.h"
+#include "AutoShader.h"
 
 class ofApp : public ofBaseApp {
 public:
@@ -49,6 +50,5 @@ public:
 	ofxCv::Intrinsics intrinsics;
 	bool calibrationReady;
 	
-	uint64_t lastFragTimestamp, lastVertTimestamp;
-	ofShader shader;
+	AutoShader shader;
 };
