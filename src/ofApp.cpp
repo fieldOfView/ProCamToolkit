@@ -299,12 +299,24 @@ void ofApp::loadCalibration() {
     
     string calibPath;
     ofFileDialogResult result = ofSystemLoadDialog("Select a calibration folder", true, ofToDataPath("", true));
-    calibPath = result.getPath();
-    
+	if (!result.bSuccess) {
+		ofLogNotice() << "canceled loading calibration";
+		return;
+	}
+	calibPath = result.getPath();
+
     // load objectPoints and imagePoints
     
     Mat objPointsMat, imgPointsMat;
-    loadMat( objPointsMat, calibPath + "/objectPoints.yml");
+	ofFile objPointsFile(calibPath + "/objectPoints.yml");
+	ofFile imgPointsFile(calibPath + "/imagePoints.yml");
+	ofFile calibrationFile(calibPath + "/calibration-advanced.yml");
+	if (!objPointsFile.exists() || !imgPointsFile.exists() || !calibrationFile.exists()) {
+		ofLogError() << "calibration files not found in folder";
+		return;
+	}
+
+	loadMat( objPointsMat, calibPath + "/objectPoints.yml");
     loadMat( imgPointsMat, calibPath + "/imagePoints.yml");
     
     int numVals;
@@ -335,12 +347,10 @@ void ofApp::loadCalibration() {
         }
         imagePoints[i/2] = iP;
     }
-    
-    
+        
     // load the calibration-advanced yml
-    
     FileStorage fs(ofToDataPath(calibPath + "/calibration-advanced.yml", true), FileStorage::READ);
-    
+
     Mat cameraMatrix;
     Size2i imageSize;
     fs["cameraMatrix"] >> cameraMatrix;
@@ -349,10 +359,14 @@ void ofApp::loadCalibration() {
     fs["rotationVector"] >> rvec;
     fs["translationVector"] >> tvec;
     
-    intrinsics.setup(cameraMatrix, imageSize);
-    modelMatrix = makeMatrix(rvec, tvec);
-    
-    calibrationReady = true;
+	if (imageSize.width != 0 && imageSize.height != 0) {
+		intrinsics.setup(cameraMatrix, imageSize);
+		modelMatrix = makeMatrix(rvec, tvec);
+
+		calibrationReady = true;
+	} else {
+		ofLogError() << "calibration does not contain image size";
+	}
 }
 
 void ofApp::setupControlPanel() {
