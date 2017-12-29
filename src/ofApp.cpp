@@ -462,6 +462,7 @@ void ofApp::updateRenderMode() {
 }
 
 void ofApp::drawLabeledPoint(int label, ofVec2f position, ofColor color, bool crossHair, ofColor bg, ofColor fg) {
+	ofPushStyle();
 	glPushAttrib(GL_DEPTH_BUFFER_BIT);
 	glDisable(GL_DEPTH_TEST);
 	//glEnable(GL_DEPTH_TEST);
@@ -474,9 +475,11 @@ void ofApp::drawLabeledPoint(int label, ofVec2f position, ofColor color, bool cr
 		ofLine(position - ofVec2f(w, 0), position + ofVec2f(w, 0));
 		ofLine(position - ofVec2f(0, h), position + ofVec2f(0, h));
 	}
+	ofNoFill();
 	ofCircle(position, geti("selectedPointSize"));
 	ofDrawBitmapStringHighlight(ofToString(label), position + tooltipOffset, bg, fg);
 	glPopAttrib();
+	ofPopStyle();
 }
 	
 void ofApp::drawSelectionMode() {
@@ -576,17 +579,14 @@ void ofApp::drawRenderMode() {
 				}
 			}
 		}
-		if(isDragging) {
+		if(hasSelection) {
 			Point2f& cur = imagePoints[index];
-			float rate = ofGetMousePressed(0) ? getf("slowLerpRate") : getf("fastLerpRate");
-			cur = Point2f(ofLerp(cur.x, mouseX, rate), ofLerp(cur.y, mouseY, rate));
+			if (isDragging) {
+				float rate = ofGetMousePressed(0) ? getf("slowLerpRate") : getf("fastLerpRate");
+				cur = Point2f(ofLerp(cur.x, mouseX, rate), ofLerp(cur.y, mouseY, rate));
+			}
 			drawLabeledPoint(index, toOf(cur), yellowPrint, true, ofColor::white, ofColor::black);
-			ofSetColor(ofColor::black);
-			ofRect(toOf(cur), 1, 1);
-		} else if(isArrowing) {
-			Point2f& cur = imagePoints[index];
-			drawLabeledPoint(index, toOf(cur), yellowPrint, true, ofColor::white, ofColor::black);
-			ofSetColor(ofColor::black);
+			ofSetColor(ofColor::white);
 			ofRect(toOf(cur), 1, 1);
         } else {
 			// check to see if anything is selected
