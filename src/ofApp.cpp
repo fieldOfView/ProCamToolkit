@@ -26,11 +26,12 @@ void ofApp::setup() {
 	ofSetWindowTitle("mapamok");
 	ofSetDrawBitmapMode(OF_BITMAPMODE_MODEL_BILLBOARD);
 	ofSetVerticalSync(true);
-	calibrationReady = false;
-	setupMesh();	
-	setupControlPanel();
 
+	calibrationReady = false;
+	setupMesh("mode.dae");
 	shader.setup("shader");
+
+	setupControlPanel();
 }
 
 void ofApp::update() {
@@ -73,22 +74,35 @@ void ofApp::draw() {
 		saveCalibration();
 		setb("saveCalibration", false);
 	}
-	if(getb("selectionMode")) {
-		drawSelectionMode();
-	} else {
-		drawRenderMode();
+
+	string message = "";
+
+	if (objectMesh.getNumIndices() > 0) {
+		if (getb("selectionMode")) {
+			drawSelectionMode();
+		}
+		else {
+			drawRenderMode();
+		}
 	}
-	if(!shader.isLoaded()) {
+	else {
+		if (message != "") message += "\n";
+		message += "No model loaded.";
+	}
+	if (!shader.isLoaded()) {
+		if (message != "") message += "\n";
+		message += "Shader failed to load.";
+	}
+
+	if(message != "") {
 		ofPushStyle();
 		ofSetColor(magentaPrint);
 		ofSetLineWidth(8);
 		ofLine(0, 0, ofGetWidth(), ofGetHeight());
 		ofLine(ofGetWidth(), 0, 0, ofGetHeight());
-		string message = "Shader failed to compile.";
 		ofVec2f center(ofGetWidth(), ofGetHeight());
 		center /= 2;
 		center.x -= message.size() * 8 / 2;
-		center.y -= 8;
 		ofDrawBitmapStringHighlight(message, center);
 		ofPopStyle();
 	}
@@ -138,9 +152,13 @@ void ofApp::mouseReleased(int x, int y, int button) {
 	setb("dragging", false);
 }
 
-void ofApp::setupMesh() {
-	model.loadModel("model.dae");
-	objectMesh = model.getMesh(0);
+void ofApp::setupMesh(string fileName) {
+	objectMesh = ofVboMesh();
+	ofFile meshFile(fileName);
+	if (meshFile.exists()) {
+		model.loadModel(fileName);
+		objectMesh = model.getMesh(0);
+	}
 	int n = objectMesh.getNumVertices();
 	objectPoints.resize(n);
 	imagePoints.resize(n);

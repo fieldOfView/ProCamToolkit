@@ -25,7 +25,7 @@ public:
 	void mouseReleased(int x, int y, int button);
 	
 	void setupControlPanel();
-	void setupMesh();
+	void setupMesh(string fileName);
 	void drawLabeledPoint(int label, ofVec2f position, ofColor color, ofColor bg = ofColor::black, ofColor fg = ofColor::white);
 	void updateRenderMode();
 	void drawSelectionMode();
