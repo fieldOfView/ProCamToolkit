@@ -40,7 +40,7 @@ void ofApp::update() {
 		setf("lightZ", ofSignedNoise(1, 1, ofGetElapsedTimef()) * 1000);
 	}
 	light.setPosition(getf("lightX"), getf("lightY"), getf("lightZ"));
-		
+
 	if(getb("selectionMode")) {
 		cam.enableMouseInput();
 	} else {
@@ -189,12 +189,12 @@ void ofApp::render() {
 		glShadeModel(GL_SMOOTH);
 		glEnable(GL_NORMALIZE);
 	}
-	
+
 	ofSetColor(255);
 	glPushAttrib(GL_ALL_ATTRIB_BITS);
 	glEnable(GL_DEPTH_TEST);
 
-	if(useShader) {		
+	if(useShader) {
 		shader.begin();
 		shader.setUniform1f("elapsedTime", ofGetElapsedTimef());
 		shader.end();
@@ -232,43 +232,43 @@ void ofApp::saveCalibration() {
 	string dirName = "calibration-" + ofGetTimestampString() + "/";
 	ofDirectory dir(dirName);
 	dir.create();
-	
-	FileStorage fs(ofToDataPath(dirName + "calibration-advanced.yml"), FileStorage::WRITE);	
-	
+
+	FileStorage fs(ofToDataPath(dirName + "calibration-advanced.yml"), FileStorage::WRITE);
+
 	Mat cameraMatrix = intrinsics.getCameraMatrix();
 	fs << "cameraMatrix" << cameraMatrix;
-	
+
 	double focalLength = intrinsics.getFocalLength();
 	fs << "focalLength" << focalLength;
-	
+
 	Point2d fov = intrinsics.getFov();
 	fs << "fov" << fov;
-	
+
 	Point2d principalPoint = intrinsics.getPrincipalPoint();
 	fs << "principalPoint" << principalPoint;
-	
+
 	cv::Size imageSize = intrinsics.getImageSize();
 	fs << "imageSize" << imageSize;
-	
+
 	fs << "translationVector" << tvec;
 	fs << "rotationVector" << rvec;
 
 	Mat rotationMatrix;
 	Rodrigues(rvec, rotationMatrix);
 	fs << "rotationMatrix" << rotationMatrix;
-	
+
 	double rotationAngleRadians = norm(rvec, NORM_L2);
 	double rotationAngleDegrees = ofRadToDeg(rotationAngleRadians);
 	Mat rotationAxis = rvec / rotationAngleRadians;
 	fs << "rotationAngleRadians" << rotationAngleRadians;
 	fs << "rotationAngleDegrees" << rotationAngleDegrees;
 	fs << "rotationAxis" << rotationAxis;
-	
+
 	ofVec3f axis(rotationAxis.at<double>(0), rotationAxis.at<double>(1), rotationAxis.at<double>(2));
 	ofVec3f euler = ofQuaternion(rotationAngleDegrees, axis).getEuler();
 	Mat eulerMat = (Mat_<double>(3,1) << euler.x, euler.y, euler.z);
 	fs << "euler" << eulerMat;
-	
+
 	ofFile basic("calibration-basic.txt", ofFile::WriteOnly);
 	ofVec3f position( tvec.at<double>(1), tvec.at<double>(2));
 	basic << "position (in world units):" << endl;
@@ -293,27 +293,27 @@ void ofApp::saveCalibration() {
 	basic << "image size (in pixels):" << endl;
 	basic << "\tx: " << ofToString(principalPoint.x, 2) << endl;
 	basic << "\ty: " << ofToString(principalPoint.y, 2) << endl;
-	
+
 	saveMat(Mat(objectPoints), dirName + "objectPoints.yml");
 	saveMat(Mat(imagePoints), dirName + "imagePoints.yml");
 }
 
 void ofApp::loadCalibration() {
-    
-    // retrieve advanced calibration folder
-    
-    string calibPath;
-    ofFileDialogResult result = ofSystemLoadDialog("Select a calibration folder", true, ofToDataPath("", true));
+
+	// retrieve advanced calibration folder
+
+	string calibPath;
+	ofFileDialogResult result = ofSystemLoadDialog("Select a calibration folder", true, ofToDataPath("", true));
 	if (!result.bSuccess) {
 		ofLogNotice() << "canceled loading calibration";
 		return;
 	}
 	calibPath = result.getPath();
 
-    // load objectPoints and imagePoints
-    
-    Mat objPointsMat, imgPointsMat;
-    ofFile objPointsFile(calibPath + "/objectPoints.yml");
+	// load objectPoints and imagePoints
+
+	Mat objPointsMat, imgPointsMat;
+	ofFile objPointsFile(calibPath + "/objectPoints.yml");
 	ofFile imgPointsFile(calibPath + "/imagePoints.yml");
 	ofFile calibrationFile(calibPath + "/calibration-advanced.yml");
 	if (!objPointsFile.exists() || !imgPointsFile.exists() || !calibrationFile.exists()) {
@@ -322,48 +322,48 @@ void ofApp::loadCalibration() {
 	}
 
 	loadMat( objPointsMat, calibPath + "/objectPoints.yml");
-    loadMat( imgPointsMat, calibPath + "/imagePoints.yml");
-    
-    int numVals;
-    cv::Point3f oP;
-    
-    const float* objVals = objPointsMat.ptr<float>(0);
-    numVals = objPointsMat.cols * objPointsMat.rows;
-    
-    for(int i = 0; i < numVals; i+=3) {
-        oP.x = objVals[i];
-        oP.y = objVals[i+1];
-        oP.z = objVals[i+2];
-        objectPoints[i/3] = oP;
-    }
-    
-    cv::Point2f iP;
-    
-    referencePoints.resize( (imgPointsMat.cols * imgPointsMat.rows ) / 2, false);
-    
-    const float* imgVals = imgPointsMat.ptr<float>(0);
-    numVals = objPointsMat.cols * objPointsMat.rows;
-    
-    for(int i = 0; i < numVals; i+=2) {
-        iP.x = imgVals[i];
-        iP.y = imgVals[i+1];
-        if(iP.x != 0 && iP.y != 0) {
-            referencePoints[i/2] = true;
-        }
-        imagePoints[i/2] = iP;
-    }
-        
-    // load the calibration-advanced yml
-    FileStorage fs(ofToDataPath(calibPath + "/calibration-advanced.yml", true), FileStorage::READ);
+	loadMat( imgPointsMat, calibPath + "/imagePoints.yml");
 
-    Mat cameraMatrix;
-    Size2i imageSize;
-    fs["cameraMatrix"] >> cameraMatrix;
-    fs["imageSize"][0] >> imageSize.width;
-    fs["imageSize"][1] >> imageSize.height;
-    fs["rotationVector"] >> rvec;
-    fs["translationVector"] >> tvec;
-    
+	int numVals;
+	cv::Point3f oP;
+
+	const float* objVals = objPointsMat.ptr<float>(0);
+	numVals = objPointsMat.cols * objPointsMat.rows;
+
+	for(int i = 0; i < numVals; i+=3) {
+		oP.x = objVals[i];
+		oP.y = objVals[i+1];
+		oP.z = objVals[i+2];
+		objectPoints[i/3] = oP;
+	}
+
+	cv::Point2f iP;
+
+	referencePoints.resize( (imgPointsMat.cols * imgPointsMat.rows ) / 2, false);
+
+	const float* imgVals = imgPointsMat.ptr<float>(0);
+	numVals = objPointsMat.cols * objPointsMat.rows;
+
+	for(int i = 0; i < numVals; i+=2) {
+		iP.x = imgVals[i];
+		iP.y = imgVals[i+1];
+		if(iP.x != 0 && iP.y != 0) {
+			referencePoints[i/2] = true;
+		}
+		imagePoints[i/2] = iP;
+	}
+
+	// load the calibration-advanced yml
+	FileStorage fs(ofToDataPath(calibPath + "/calibration-advanced.yml", true), FileStorage::READ);
+
+	Mat cameraMatrix;
+	Size2i imageSize;
+	fs["cameraMatrix"] >> cameraMatrix;
+	fs["imageSize"][0] >> imageSize.width;
+	fs["imageSize"][1] >> imageSize.height;
+	fs["rotationVector"] >> rvec;
+	fs["translationVector"] >> tvec;
+
 	if (imageSize.width != 0 && imageSize.height != 0) {
 		intrinsics.setup(cameraMatrix, imageSize);
 		modelMatrix = makeMatrix(rvec, tvec);
@@ -386,7 +386,7 @@ void ofApp::resetCalibration() {
 void ofApp::setupControlPanel() {
 	panel.setup();
 	panel.msg = "tab hides the panel, space toggles render/selection mode, 'f' toggles fullscreen.";
-	
+
 	panel.addPanel("Interaction");
 	panel.addToggle("setupMode", true);
 	panel.addToggle("selectionMode", true);
@@ -405,7 +405,7 @@ void ofApp::setupControlPanel() {
 	panel.addToggle("CV_CALIB_FIX_K3", true);
 	panel.addToggle("CV_CALIB_ZERO_TANGENT_DIST", true);
 	panel.addToggle("CV_CALIB_FIX_PRINCIPAL_POINT", false);
-	
+
 	panel.addPanel("Rendering");
 	panel.addSlider("lineWidth", 1, 1, 8, true);
 	panel.addToggle("useSmoothing", false);
@@ -420,7 +420,7 @@ void ofApp::setupControlPanel() {
 	panel.addSlider("lightY", 400, -1000, 1000);
 	panel.addSlider("lightZ", 800, -1000, 1000);
 	panel.addToggle("randomLighting", false);
-	
+
 	panel.addPanel("Internal");
 	panel.addSlider("slowLerpRate", .001, 0, .01);
 	panel.addSlider("fastLerpRate", 1, 0, 1);
@@ -436,7 +436,7 @@ void ofApp::updateRenderMode() {
 		f, 0, c.x,
 		0, f, c.y,
 		0, 0, 1);
-		
+
 	// generate flags
 	#define getFlag(flag) (panel.getValueB((#flag)) ? flag : 0)
 	int flags =
@@ -447,7 +447,7 @@ void ofApp::updateRenderMode() {
 		getFlag(CV_CALIB_FIX_K2) |
 		getFlag(CV_CALIB_FIX_K3) |
 		getFlag(CV_CALIB_ZERO_TANGENT_DIST);
-	
+
 	vector<Mat> rvecs, tvecs;
 	Mat distCoeffs;
 	vector<vector<Point3f> > referenceObjectPoints(1);
@@ -492,7 +492,7 @@ void ofApp::drawLabeledPoint(int label, ofVec2f position, ofColor color, bool cr
 	glPopAttrib();
 	ofPopStyle();
 }
-	
+
 void ofApp::drawSelectionMode() {
 	ofSetColor(255);
 	cam.begin();
@@ -509,7 +509,7 @@ void ofApp::drawSelectionMode() {
 		imageMesh = getProjectedMesh(objectMesh);
 	}
 	cam.end();
-	
+
 	if(getb("setupMode")) {
 		// draw all points cyan small
 		glPointSize(geti("screenPointSize"));
@@ -524,7 +524,7 @@ void ofApp::drawSelectionMode() {
 				drawLabeledPoint(i, imageMesh.getVertex(i), cyanPrint, false);
 			}
 		}
-		
+
 		// check to see if anything is selected
 		// draw hover point magenta
 		int index;
@@ -537,7 +537,7 @@ void ofApp::drawSelectionMode() {
 		} else {
 			isHovering = false;
 		}
-		
+
 		// draw selected point yellow
 		if(hasSelection) {
 			int index = selectedIndex;
@@ -552,21 +552,21 @@ void ofApp::drawRenderMode() {
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glMatrixMode(GL_MODELVIEW);
-	
+
 	if(calibrationReady) {
 		intrinsics.loadProjectionMatrix(10, 2000);
 		applyMatrix(modelMatrix);
 		render();
 		if(getb("setupMode")) {
-			imageMesh = getProjectedMesh(objectMesh);	
+			imageMesh = getProjectedMesh(objectMesh);
 		}
 	}
-	
+
 	glPopMatrix();
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
-	
+
 	if(getb("setupMode")) {
 		// draw all reference points cyan
 		int n = referencePoints.size();
@@ -575,13 +575,13 @@ void ofApp::drawRenderMode() {
 				drawLabeledPoint(i, toOf(imagePoints[i]), cyanPrint, false);
 			}
 		}
-		
+
 		// move points that need to be dragged
 		// draw selected yellow
 		int index = selectedIndex;
 		if(hasSelection) {
-			referencePoints[index] = true;	
-			Point2f& cur = imagePoints[index];	
+			referencePoints[index] = true;
+			Point2f& cur = imagePoints[index];
 			if(cur == Point2f()) {
 				if(calibrationReady) {
 					cur = toCv(ofVec2f(imageMesh.getVertex(index)));
@@ -599,7 +599,7 @@ void ofApp::drawRenderMode() {
 			drawLabeledPoint(index, toOf(cur), yellowPrint, true, ofColor::white, ofColor::black);
 			ofSetColor(ofColor::white);
 			ofRect(toOf(cur), 1, 1);
-        } else {
+		} else {
 			// check to see if anything is selected
 			// draw hover magenta
 			float distance;

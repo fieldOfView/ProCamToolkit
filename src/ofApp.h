@@ -16,14 +16,14 @@ public:
 	bool getb(string name);
 	int geti(string name);
 	float getf(string name);
-	
+
 	void setup();
 	void update();
-	void draw();	
+	void draw();
 	void keyPressed(int key);
 	void mousePressed(int x, int y, int button);
 	void mouseReleased(int x, int y, int button);
-	
+
 	void setupControlPanel();
 	void setupMesh(string fileName);
 	void drawLabeledPoint(int label, ofVec2f position, ofColor color, bool crossHair = true, ofColor bg = ofColor::black, ofColor fg = ofColor::white);
@@ -31,26 +31,26 @@ public:
 	void drawSelectionMode();
 	void drawRenderMode();
 	void render();
-    void loadCalibration();
+	void loadCalibration();
 	void saveCalibration();
 	void resetCalibration();
 
-	ofxAssimpModelLoader model;	
+	ofxAssimpModelLoader model;
 	ofEasyCam cam;
 	ofVboMesh objectMesh;
 	ofMesh imageMesh;
 	ofLight light;
 	ofxAutoControlPanel panel;
-	
+
 	vector<cv::Point3f> objectPoints;
 	vector<cv::Point2f> imagePoints;
 	vector<bool> referencePoints;
-	
+
 	cv::Mat rvec, tvec;
 	ofMatrix4x4 modelMatrix;
 	ofxCv::Intrinsics intrinsics;
 	bool calibrationReady = false;
-	
+
 	AutoShader shader;
 
 private:
