@@ -27,8 +27,7 @@ void ofApp::setup() {
 	ofSetDrawBitmapMode(OF_BITMAPMODE_MODEL_BILLBOARD);
 	ofSetVerticalSync(true);
 
-	calibrationReady = false;
-	setupMesh("mode.dae");
+	setupMesh("model.dae");
 	shader.setup("shader");
 
 	setupControlPanel();
@@ -110,10 +109,10 @@ void ofApp::draw() {
 
 void ofApp::keyPressed(int key) {
 	if(key == OF_KEY_LEFT || key == OF_KEY_UP || key == OF_KEY_RIGHT|| key == OF_KEY_DOWN){
-		int choice = geti("selectionChoice");
-		setb("arrowing", true);
-		if(choice > 0){
-			Point2f& cur = imagePoints[choice];
+		int index = selectedIndex;
+		isArrowing = true;
+		if(index > 0){
+			Point2f& cur = imagePoints[index];
 			switch(key) {
 				case OF_KEY_LEFT: cur.x -= 1; break;
 				case OF_KEY_RIGHT: cur.x += 1; break;
@@ -122,18 +121,18 @@ void ofApp::keyPressed(int key) {
 			}
 		}
 	} else {
-		setb("arrowing",false);
+		isArrowing = false;
 	}
 	if(key == OF_KEY_BACKSPACE) { // delete selected
-		if(getb("selected")) {
-			setb("selected", false);
-			int choice = geti("selectionChoice");
-			referencePoints[choice] = false;
-			imagePoints[choice] = Point2f();
+		if(hasSelection) {
+			hasSelection = false;
+			int index = selectedIndex;
+			referencePoints[index] = false;
+			imagePoints[index] = Point2f();
 		}
 	}
 	if(key == '\n') { // deselect
-		setb("selected", false);
+		hasSelection = false;
 	}
 	if(key == ' ') { // toggle render/select mode
 		setb("selectionMode", !getb("selectionMode"));
@@ -141,15 +140,15 @@ void ofApp::keyPressed(int key) {
 }
 
 void ofApp::mousePressed(int x, int y, int button) {
-	setb("selected", getb("hoverSelected"));
-	seti("selectionChoice", geti("hoverChoice"));
-	if(getb("selected")) {
-		setb("dragging", true);
+	hasSelection = isHovering;
+	selectedIndex = hoveredIndex;
+	if(hasSelection) {
+		isDragging = true;
 	}
 }
 
 void ofApp::mouseReleased(int x, int y, int button) {
-	setb("dragging", false);
+	isDragging = false;
 }
 
 void ofApp::setupMesh(string fileName) {
@@ -412,12 +411,6 @@ void ofApp::setupControlPanel() {
 	
 	panel.addPanel("Internal");
 	panel.addToggle("selectionMode", true);
-	panel.addToggle("hoverSelected", false);
-	panel.addSlider("hoverChoice", 0, 0, objectPoints.size(), true);
-	panel.addToggle("selected", false);
-	panel.addToggle("dragging", false);
-	panel.addToggle("arrowing", false);
-	panel.addSlider("selectionChoice", 0, 0, objectPoints.size(), true);
 	panel.addSlider("slowLerpRate", .001, 0, .01);
 	panel.addSlider("fastLerpRate", 1, 0, 1);
 }
@@ -518,22 +511,22 @@ void ofApp::drawSelectionMode() {
 		
 		// check to see if anything is selected
 		// draw hover point magenta
-		int choice;
+		int index;
 		float distance;
-		ofVec3f selected = getClosestPointOnMesh(imageMesh, mouseX, mouseY, &choice, &distance);
+		ofVec3f selected = getClosestPointOnMesh(imageMesh, mouseX, mouseY, &index, &distance);
 		if(!ofGetMousePressed() && distance < getf("selectionRadius")) {
-			seti("hoverChoice", choice);
-			setb("hoverSelected", true);
-			drawLabeledPoint(choice, selected, magentaPrint);
+			hoveredIndex = index;
+			isHovering = true;
+			drawLabeledPoint(index, selected, magentaPrint);
 		} else {
-			setb("hoverSelected", false);
+			isHovering = false;
 		}
 		
 		// draw selected point yellow
-		if(getb("selected")) {
-			int choice = geti("selectionChoice");
-			ofVec2f selected = imageMesh.getVertex(choice);
-			drawLabeledPoint(choice, selected, yellowPrint, ofColor::white, ofColor::black);
+		if(hasSelection) {
+			int index = selectedIndex;
+			ofVec2f selected = imageMesh.getVertex(index);
+			drawLabeledPoint(index, selected, yellowPrint, ofColor::white, ofColor::black);
 		}
 	}
 }
@@ -569,41 +562,41 @@ void ofApp::drawRenderMode() {
 		
 		// move points that need to be dragged
 		// draw selected yellow
-		int choice = geti("selectionChoice");
-		if(getb("selected")) {
-			referencePoints[choice] = true;	
-			Point2f& cur = imagePoints[choice];	
+		int index = selectedIndex;
+		if(hasSelection) {
+			referencePoints[index] = true;	
+			Point2f& cur = imagePoints[index];	
 			if(cur == Point2f()) {
 				if(calibrationReady) {
-					cur = toCv(ofVec2f(imageMesh.getVertex(choice)));
+					cur = toCv(ofVec2f(imageMesh.getVertex(index)));
 				} else {
 					cur = Point2f(mouseX, mouseY);
 				}
 			}
 		}
-		if(getb("dragging")) {
-			Point2f& cur = imagePoints[choice];
+		if(isDragging) {
+			Point2f& cur = imagePoints[index];
 			float rate = ofGetMousePressed(0) ? getf("slowLerpRate") : getf("fastLerpRate");
 			cur = Point2f(ofLerp(cur.x, mouseX, rate), ofLerp(cur.y, mouseY, rate));
-			drawLabeledPoint(choice, toOf(cur), yellowPrint, ofColor::white, ofColor::black);
+			drawLabeledPoint(index, toOf(cur), yellowPrint, ofColor::white, ofColor::black);
 			ofSetColor(ofColor::black);
 			ofRect(toOf(cur), 1, 1);
-		} else if(getb("arrowing")) {
-			Point2f& cur = imagePoints[choice];
-			drawLabeledPoint(choice, toOf(cur), yellowPrint, ofColor::white, ofColor::black);
+		} else if(isArrowing) {
+			Point2f& cur = imagePoints[index];
+			drawLabeledPoint(index, toOf(cur), yellowPrint, ofColor::white, ofColor::black);
 			ofSetColor(ofColor::black);
 			ofRect(toOf(cur), 1, 1);
         } else {
 			// check to see if anything is selected
 			// draw hover magenta
 			float distance;
-			ofVec2f selected = toOf(getClosestPoint(imagePoints, mouseX, mouseY, &choice, &distance));
-			if(!ofGetMousePressed() && referencePoints[choice] && distance < getf("selectionRadius")) {
-				seti("hoverChoice", choice);
-				setb("hoverSelected", true);
-				drawLabeledPoint(choice, selected, magentaPrint);
+			ofVec2f selected = toOf(getClosestPoint(imagePoints, mouseX, mouseY, &index, &distance));
+			if(!ofGetMousePressed() && referencePoints[index] && distance < getf("selectionRadius")) {
+				hoveredIndex = index;
+				isHovering = true;
+				drawLabeledPoint(index, selected, magentaPrint);
 			} else {
-				setb("hoverSelected", false);
+				isHovering = false;
 			}
 		}
 	}

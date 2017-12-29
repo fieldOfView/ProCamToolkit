@@ -48,7 +48,15 @@ public:
 	cv::Mat rvec, tvec;
 	ofMatrix4x4 modelMatrix;
 	ofxCv::Intrinsics intrinsics;
-	bool calibrationReady;
+	bool calibrationReady = false;
 	
 	AutoShader shader;
+
+private:
+	bool isDragging = false;
+	bool isArrowing = false;
+	bool hasSelection = false;
+	bool isHovering = false;
+	unsigned int hoveredIndex;
+	unsigned int selectedIndex;
 };
