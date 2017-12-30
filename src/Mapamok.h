@@ -9,7 +9,7 @@ public:
 	float nearDist = 10;
 	float farDist = 2000;
 
-	void calibrate(int width, int height, vector<cv::Point2f>& imagePoints, vector<cv::Point3f>& objectPoints, vector<bool>& referencePoints, int flags, float aov = 80);
+	void calibrate(int width, int height, vector<cv::Point2f>& imagePoints, vector<cv::Point3f>& objectPoints, int flags, float aov = 80);
 
 	void begin();
 

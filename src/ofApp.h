@@ -32,6 +32,7 @@ public:
 	void drawSelectionMode();
 	void drawRenderMode();
 	void render();
+
 	void loadCalibration();
 	void saveCalibration();
 	void resetCalibration();
@@ -46,7 +47,7 @@ public:
 
 	vector<cv::Point3f> objectPoints;
 	vector<cv::Point2f> imagePoints;
-	vector<bool> referencePoints;
+	vector<unsigned int> pointIndices;
 
 	AutoShader shader;
 
@@ -57,6 +58,7 @@ private:
 	bool isHovering = false;
 	unsigned int hoveredIndex;
 	unsigned int selectedIndex;
+	int selectedReferenceIndex;
 
 	bool dataChanged = false;
 };

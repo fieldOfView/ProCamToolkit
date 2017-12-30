@@ -3,8 +3,8 @@
 using namespace ofxCv;
 using namespace cv;
 
-void Mapamok::calibrate(int width, int height, vector<cv::Point2f>& imagePoints, vector<cv::Point3f>& objectPoints, vector<bool>& referencePoints, int flags, float aov) {
-	int n = referencePoints.size();
+void Mapamok::calibrate(int width, int height, vector<cv::Point2f>& imagePoints, vector<cv::Point3f>& objectPoints, int flags, float aov) {
+	int n = imagePoints.size();
 	const static int minPoints = 6;
 	if (n < minPoints) {
 		calibrationReady = false;
@@ -15,15 +15,10 @@ void Mapamok::calibrate(int width, int height, vector<cv::Point2f>& imagePoints,
 	vector<vector<cv::Point3f> > objectPointsCv(1);
 	vector<vector<cv::Point2f> > imagePointsCv(1);
 	for (int i = 0; i < n; i++) {
-		if (referencePoints[i]) {
-			objectPointsCv[0].push_back(objectPoints[i]);
-			imagePointsCv[0].push_back(imagePoints[i]);
-		}
+		objectPointsCv[0].push_back(objectPoints[i]);
+		imagePointsCv[0].push_back(imagePoints[i]);
 	}
-	if (objectPointsCv[0].size() < minPoints) {
-		calibrationReady = false;
-		return;
-	}
+
 	cv::Size2i imageSize(width, height);
 	float f = imageSize.width * ofDegToRad(aov); // this might be wrong, but it's optimized out
 	cv::Point2f c = cv::Point2f(imageSize) * (1. / 2);
