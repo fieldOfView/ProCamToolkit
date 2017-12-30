@@ -259,9 +259,18 @@ void ofApp::saveCalibration() {
 }
 
 void ofApp::loadCalibration() {
+#ifdef TARGET_WIN32
+	int windowMode = ofGetWindowMode();
+	if (windowMode == OF_FULLSCREEN) ofSetFullscreen(false);
+#endif
 
 	string calibPath;
-	ofFileDialogResult result = ofSystemLoadDialog("Select a calibration folder", true, ofToDataPath("", true));
+	ofFileDialogResult result = ofSystemLoadDialog("Select a calibration folder", true, ofFilePath::addTrailingSlash(ofToDataPath("", true)));
+
+#ifdef TARGET_WIN32
+	if (windowMode == OF_FULLSCREEN) ofSetFullscreen(true);
+#endif
+
 	if (!result.bSuccess) {
 		ofLogNotice() << "canceled loading calibration";
 		return;
