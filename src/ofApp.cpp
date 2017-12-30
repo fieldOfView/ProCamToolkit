@@ -241,9 +241,9 @@ void ofApp::render() {
 }
 
 void ofApp::saveCalibration() {
-	string dirName = "calibration-" + ofGetTimestampString() + "/";
+	string dirName = "calibrations/" + ofGetTimestampString() + "/";
 	ofDirectory dir(dirName);
-	dir.create();
+	dir.create(true);
 
 	mapamok.save(dirName + "calibration.yml", dirName + "summary.txt");
 
@@ -265,7 +265,7 @@ void ofApp::loadCalibration() {
 #endif
 
 	string calibPath;
-	ofFileDialogResult result = ofSystemLoadDialog("Select a calibration folder", true, ofFilePath::addTrailingSlash(ofToDataPath("", true)));
+	ofFileDialogResult result = ofSystemLoadDialog("Select a calibration folder", true, ofFilePath::addTrailingSlash(ofToDataPath("calibrations", true)));
 
 #ifdef TARGET_WIN32
 	if (windowMode == OF_FULLSCREEN) ofSetFullscreen(true);
