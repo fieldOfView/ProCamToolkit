@@ -62,20 +62,6 @@ void ofApp::update() {
 	}
 }
 
-void enableFog(float nearFog, float farFog) {
-	glEnable(GL_FOG);
-	glFogi(GL_FOG_MODE, GL_LINEAR);
-	GLfloat fogColor[4]= {0, 0, 0, 1};
-	glFogfv(GL_FOG_COLOR, fogColor);
-	glHint(GL_FOG_HINT, GL_FASTEST);
-	glFogf(GL_FOG_START, nearFog);
-	glFogf(GL_FOG_END, farFog);
-}
-
-void disableFog() {
-	glDisable(GL_FOG);
-}
-
 void ofApp::draw() {
 	ofBackground(geti("backgroundColor"));
 
@@ -334,9 +320,6 @@ void ofApp::setupControlPanel() {
 	panel.addPanel("Rendering");
 	panel.addSlider("lineWidth", 1, 1, 8, true);
 	panel.addToggle("useSmoothing", false);
-	panel.addToggle("useFog", false);
-	panel.addSlider("fogNear", 200, 0, 1000);
-	panel.addSlider("fogFar", 1850, 0, 2500);
 	panel.addSlider("backgroundColor", 0, 0, 255, true);
 	panel.addSlider("screenPointSize", 2, 1, 16, true);
 	panel.addSlider("selectedPointSize", 8, 1, 16, true);
@@ -397,13 +380,9 @@ void ofApp::drawSelectionMode() {
 	cam.begin();
 	float scale = getf("scale");
 	ofScale(scale, scale, scale);
-	if (getb("useFog")) {
-		enableFog(getf("fogNear"), getf("fogFar"));
-	}
+
 	render();
-	if (getb("useFog")) {
-		disableFog();
-	}
+
 	if (getb("setupMode")) {
 		imageMesh = getProjectedMesh(objectMesh);
 	}
