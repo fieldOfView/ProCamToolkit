@@ -3,9 +3,10 @@
 #include "ofMain.h"
 #include "ofxCv.h"
 #include "ofxAssimpModelLoader.h"
-#include "ofxProCamToolkit.h"
 #include "ofxAutoControlPanel.h"
 #include "Mapamok.h"
+#include "SelectablePoints.h"
+#include "DraggablePoints.h"
 #include "LineArt.h"
 #include "AutoShader.h"
 
@@ -22,12 +23,11 @@ public:
 	void update();
 	void draw();
 	void keyPressed(int key);
-	void mousePressed(int x, int y, int button);
-	void mouseReleased(int x, int y, int button);
 
 	void setupControlPanel();
 	void setupMesh(string fileName);
-	void drawLabeledPoint(int label, ofVec2f position, ofColor color, bool crossHair = true, ofColor bg = ofColor::black, ofColor fg = ofColor::white);
+
+	void updateSelectionMode();
 	void updateRenderMode();
 	void drawSelectionMode();
 	void drawRenderMode();
@@ -41,6 +41,7 @@ public:
 	ofxAssimpModelLoader model;
 	ofEasyCam cam;
 	ofVboMesh objectMesh;
+	ofVboMesh referenceMesh;
 	ofMesh imageMesh;
 	ofLight light;
 	ofxAutoControlPanel panel;
@@ -49,16 +50,12 @@ public:
 	vector<cv::Point2f> imagePoints;
 	vector<unsigned int> pointIndices;
 
+	DraggablePoints placedPoints;
+	SelectablePoints referenceMeshPoints;
+
 	AutoShader shader;
 
 private:
-	bool isDragging = false;
-	bool isArrowing = false;
-	bool hasSelection = false;
-	bool isHovering = false;
-	unsigned int hoveredIndex;
-	unsigned int selectedIndex;
-	int selectedReferenceIndex;
-
+	const float selectionMergeTolerance = .01;
 	bool dataChanged = false;
 };

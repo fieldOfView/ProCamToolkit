@@ -1,4 +1,6 @@
 #include "ofApp.h"
+#include "MeshUtils.h"
+
 
 using namespace ofxCv;
 using namespace cv;
@@ -31,6 +33,17 @@ void ofApp::setup() {
 	shader.setup("shader");
 
 	setupControlPanel();
+
+	referenceMeshPoints.setAutoMark(false);
+	placedPoints.setAutoMark(false);
+
+	referenceMeshPoints.disableDrawEvent();
+	referenceMeshPoints.enableControlEvents();
+	placedPoints.disableDrawEvent();
+	placedPoints.disableControlEvents();
+
+	referenceMeshPoints.setClickRadius(8);
+	placedPoints.setClickRadius(8);
 }
 
 void ofApp::update() {
@@ -42,6 +55,7 @@ void ofApp::update() {
 	light.setPosition(getf("lightX"), getf("lightY"), getf("lightZ"));
 
 	if(getb("selectionMode")) {
+		updateSelectionMode();
 		cam.enableMouseInput();
 	} else {
 		updateRenderMode();
@@ -67,7 +81,7 @@ void ofApp::draw() {
 
 	string message = "";
 
-	if (objectMesh.getNumIndices() > 0) {
+	if (referenceMesh.getNumIndices() > 0) {
 		if (getb("selectionMode")) {
 			drawSelectionMode();
 		}
@@ -99,61 +113,80 @@ void ofApp::draw() {
 }
 
 void ofApp::keyPressed(int key) {
-	if(key == OF_KEY_LEFT || key == OF_KEY_UP || key == OF_KEY_RIGHT|| key == OF_KEY_DOWN){
-		if (selectedReferenceIndex != -1) {
-			isArrowing = true;
-			Point2f& cur = imagePoints[selectedReferenceIndex];
-			switch(key) {
-				case OF_KEY_LEFT: cur.x -= 1; break;
-				case OF_KEY_RIGHT: cur.x += 1; break;
-				case OF_KEY_UP: cur.y -= 1; break;
-				case OF_KEY_DOWN: cur.y += 1; break;
-			}
-			dataChanged = true;
-		}
-	} else {
-		isArrowing = false;
-	}
 	if(key == OF_KEY_BACKSPACE) { // delete selected
-		if(hasSelection) {
-			hasSelection = false;
-
-			if (selectedReferenceIndex != -1) {
-				objectPoints.erase(objectPoints.begin() + selectedReferenceIndex);
-				imagePoints.erase(imagePoints.begin() + selectedReferenceIndex);
-				pointIndices.erase(pointIndices.begin() + selectedReferenceIndex);
-
-				dataChanged = true;
+		if (getb("selectionMode")) {
+			vector<unsigned int> selectedPoints = referenceMeshPoints.getSelected();
+			reverse(selectedPoints.begin(), selectedPoints.end());
+			for (unsigned int const& selectedPoint : selectedPoints) {
+				if (referenceMeshPoints.get(selectedPoint).marked) {
+					referenceMeshPoints.get(selectedPoint).marked = false;
+					auto result = find(pointIndices.begin(), pointIndices.end(), selectedPoint);
+					if (result != pointIndices.end()) {
+						unsigned int placedPointIndex = result - pointIndices.begin();
+						placedPoints.remove(placedPointIndex);
+						pointIndices.erase(pointIndices.begin() + placedPointIndex);
+					}
+				}
+			}
+		} else {
+			vector<unsigned int> selectedPoints = placedPoints.getSelected();
+			reverse(selectedPoints.begin(), selectedPoints.end());
+			for (unsigned int const& selectedPoint : selectedPoints) {
+				referenceMeshPoints.get((pointIndices[selectedPoint])).marked = false;
+				placedPoints.remove(selectedPoint);
+				pointIndices.erase(pointIndices.begin() + selectedPoint);
 			}
 		}
 	}
-	if(key == '\n') { // deselect
-		hasSelection = false;
-	}
+
 	if(key == ' ') { // toggle render/select mode
 		setb("selectionMode", !getb("selectionMode"));
+		if (getb("selectionMode")) {
+			referenceMeshPoints.enableControlEvents();
+			placedPoints.disableControlEvents();
+
+			referenceMeshPoints.deselectAll();
+
+		} else {
+			referenceMeshPoints.disableControlEvents();
+			placedPoints.enableControlEvents();
+
+			placedPoints.deselectAll();
+
+			vector<unsigned int> selectedPoints = referenceMeshPoints.getSelected();
+			for (unsigned int const& selectedPoint : selectedPoints) {
+				if (!referenceMeshPoints.get(selectedPoint).marked) {
+					// new point
+					ofVec2f newPoint;
+					if (mapamok.calibrationReady) {
+
+					} else {
+						newPoint = ofVec2f(ofGetMouseX(), ofGetMouseY());
+					}
+					objectPoints.push_back(toCv(objectMesh.getVertex(selectedPoint)));
+					imagePoints.push_back(toCv(newPoint));
+					placedPoints.add(newPoint);
+
+					unsigned int newPlacedPointIndex = placedPoints.size() - 1;
+					pointIndices.push_back(selectedPoint);
+
+					referenceMeshPoints.get(selectedPoint).marked = true;
+
+					placedPoints.setSelected(newPlacedPointIndex, true);
+				} else {
+					// point was already placed
+
+					unsigned int previouslyPlacedPointIndex = -1;
+					auto result = find(pointIndices.begin(), pointIndices.end(), selectedPoint);
+					if (result != pointIndices.end()) {
+						previouslyPlacedPointIndex = result - pointIndices.begin();
+
+						placedPoints.setSelected(previouslyPlacedPointIndex, true);
+					}
+				}
+			}
+		}
 	}
-}
-
-void ofApp::mousePressed(int x, int y, int button) {
-	hasSelection = isHovering;
-	selectedIndex = hoveredIndex;
-
-	selectedReferenceIndex = -1;
-	auto result = find(pointIndices.begin(), pointIndices.end(), selectedIndex);
-	if (result != pointIndices.end()) {
-		selectedReferenceIndex = result - pointIndices.begin();
-	} else {
-		selectedReferenceIndex = -1;
-	}
-
-	if(hasSelection) {
-		isDragging = true;
-	}
-}
-
-void ofApp::mouseReleased(int x, int y, int button) {
-	isDragging = false;
 }
 
 void ofApp::setupMesh(string fileName) {
@@ -161,9 +194,21 @@ void ofApp::setupMesh(string fileName) {
 	ofFile meshFile(fileName);
 	if (meshFile.exists()) {
 		model.loadModel(fileName);
-		objectMesh = model.getMesh(0);
+		vector<ofMesh> meshes = getMeshes(model);
+
+		// join all the meshes
+		objectMesh = ofVboMesh();
+		objectMesh = joinMeshes(meshes);
 	}
-	int n = objectMesh.getNumVertices();
+
+	referenceMesh = ofVboMesh(objectMesh);
+	referenceMesh = mergeNearbyVertices(referenceMesh, selectionMergeTolerance);
+
+	referenceMeshPoints.clear();
+	for (std::vector<int>::size_type index = 0; index != referenceMesh.getNumVertices(); index++) {
+		referenceMeshPoints.add(ofVec2f());
+	}
+
 	objectPoints.clear();
 	imagePoints.clear();
 	pointIndices.clear();
@@ -328,10 +373,18 @@ void ofApp::setupControlPanel() {
 	panel.addSlider("lightY", 400, -1000, 1000);
 	panel.addSlider("lightZ", 800, -1000, 1000);
 	panel.addToggle("randomLighting", false);
+}
 
-	panel.addPanel("Internal");
-	panel.addSlider("slowLerpRate", .001, 0, .01);
-	panel.addSlider("fastLerpRate", 1, 0, 1);
+void ofApp::updateSelectionMode() {
+	if (getb("setupMode")) {
+		// TODO: only do this if the camera has changed
+		imageMesh = ofVboMesh(referenceMesh);
+		project(imageMesh, cam, ofGetCurrentViewport());
+		vector<ofPoint> imageMeshPoints = imageMesh.getVertices();
+		for (std::vector<int>::size_type index = 0; index != imageMeshPoints.size(); index++) {
+			referenceMeshPoints.get(index).position = ofVec2f(imageMeshPoints[index].x, imageMeshPoints[index].y);
+		}
+	}
 }
 
 void ofApp::updateRenderMode() {
@@ -354,145 +407,36 @@ void ofApp::updateRenderMode() {
 	}
 }
 
-void ofApp::drawLabeledPoint(int label, ofVec2f position, ofColor color, bool crossHair, ofColor bg, ofColor fg) {
-	ofPushStyle();
-	glPushAttrib(GL_DEPTH_BUFFER_BIT);
-	glDisable(GL_DEPTH_TEST);
-	//glEnable(GL_DEPTH_TEST);
-	ofVec2f tooltipOffset(5, -25);
-	ofSetColor(color);
-	ofSetLineWidth(1);
-	if (crossHair) {
-		float w = ofGetWidth();
-		float h = ofGetHeight();
-		ofLine(position - ofVec2f(w, 0), position + ofVec2f(w, 0));
-		ofLine(position - ofVec2f(0, h), position + ofVec2f(0, h));
-	}
-	ofNoFill();
-	ofCircle(position, geti("selectedPointSize"));
-	ofDrawBitmapStringHighlight(ofToString(label), position + tooltipOffset, bg, fg);
-	glPopAttrib();
-	ofPopStyle();
-}
 
 void ofApp::drawSelectionMode() {
-	ofSetColor(255);
 	cam.begin();
+	
 	float scale = getf("scale");
 	ofScale(scale, scale, scale);
 
 	render();
 
-	if (getb("setupMode")) {
-		imageMesh = getProjectedMesh(objectMesh);
-	}
 	cam.end();
 
 	if (getb("setupMode")) {
-		// draw all points cyan small
-		glPointSize(geti("screenPointSize"));
-		glEnable(GL_POINT_SMOOTH);
-		ofSetColor(cyanPrint);
-		imageMesh.drawVertices();
-
-		// draw all reference points cyan
-		int n = pointIndices.size();
-		for (int i = 0; i < n; i++) {
-			unsigned int index = pointIndices[i];
-			drawLabeledPoint(index, imageMesh.getVertex(index), cyanPrint, false);
-		}
-
-		// check to see if anything is selected
-		// draw hover point magenta
-		int index;
-		float distance;
-		ofVec3f selected = getClosestPointOnMesh(imageMesh, mouseX, mouseY, &index, &distance);
-		if (!ofGetMousePressed() && distance < getf("selectionRadius")) {
-			hoveredIndex = index;
-			isHovering = true;
-			drawLabeledPoint(index, selected, magentaPrint);
-		}
-		else {
-			isHovering = false;
-		}
-
-		// draw selected point yellow
-		if (hasSelection) {
-			int index = selectedIndex;
-			ofVec2f selected = imageMesh.getVertex(index);
-			drawLabeledPoint(index, selected, yellowPrint, true, ofColor::white, ofColor::black);
-		}
+		referenceMeshPoints.draw(ofEventArgs());
 	}
 }
 
 void ofApp::drawRenderMode() {
-	mapamok.begin();
-
 	if (mapamok.calibrationReady) {
+		mapamok.begin();
+
 		render();
 		if (getb("setupMode")) {
-			imageMesh = getProjectedMesh(objectMesh);
+			imageMesh = getProjectedMesh(referenceMesh);
 		}
+
+		mapamok.end();
 	}
 
-	mapamok.end();
 
 	if (getb("setupMode")) {
-		// draw all reference points cyan
-		int n = imagePoints.size();
-		for (int i = 0; i < n; i++) {
-			drawLabeledPoint(pointIndices[i], toOf(imagePoints[i]), cyanPrint, false);
-		}
-
-		// move points that need to be dragged
-		// draw selected yellow
-		int index = selectedIndex;
-
-		if(hasSelection) {
-			int index;
-			if (selectedReferenceIndex != -1) {
-				index = selectedReferenceIndex;
-			}
-			else {
-				index = pointIndices.size();
-				selectedReferenceIndex = index;
-				pointIndices.push_back(selectedIndex);
-				objectPoints.push_back(toCv(objectMesh.getVertex(selectedIndex)));
-				imagePoints.push_back(Point2f());
-			}
-
-			Point2f& cur = imagePoints[index];
-			if(cur == Point2f()) {
-				if(mapamok.calibrationReady) {
-					cur = toCv(ofVec2f(imageMesh.getVertex(index)));
-				} else {
-					cur = Point2f(mouseX, mouseY);
-				}
-			}
-			dataChanged = true;
-
-			if (isDragging) {
-				float rate = ofGetMousePressed(0) ? getf("slowLerpRate") : getf("fastLerpRate");
-				cur = Point2f(ofLerp(cur.x, mouseX, rate), ofLerp(cur.y, mouseY, rate));
-			}
-			drawLabeledPoint(pointIndices[index], toOf(cur), yellowPrint, true, ofColor::white, ofColor::black);
-			ofSetColor(ofColor::white);
-			ofRect(toOf(cur), 1, 1);
-		} else {
-			// check to see if anything is selected
-			isHovering = false;
-			if (selectedReferenceIndex != -1) {
-				float distance;
-				int index = selectedIndex; // unsigned/signed int hack
-				ofVec2f selected = toOf(getClosestPoint(imagePoints, mouseX, mouseY, &index, &distance));
-
-				if (!ofGetMousePressed() && distance < getf("selectionRadius")) {
-					hoveredIndex = index;
-					isHovering = true;
-					// draw hover magenta
-					drawLabeledPoint(pointIndices[index], selected, magentaPrint);
-				}
-			} 
-		}
+		placedPoints.draw(ofEventArgs());
 	}
 }
