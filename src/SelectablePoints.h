@@ -59,8 +59,8 @@ public:
         selected.clear();
     }
 	void deselectAll() {
-		for (set<unsigned int>::iterator itr = selected.begin(); itr != selected.end(); itr++) {
-			points[*itr].selected = false;
+		for (auto itr = points.begin(); itr != points.end(); itr++) {
+			(*itr).selected = false;
 		}
 		selected.clear();
 	}
@@ -95,10 +95,7 @@ public:
 			}			
 		}
 		if (!shift) {
-			for (set<unsigned int>::iterator itr = selected.begin(); itr != selected.end(); itr++) {
-				points[*itr].reset(true);
-			}
-			selected.clear();
+			deselectAll();
 		}
 		if (nearestPointIndex != -1 && !points[nearestPointIndex].selected) {
 			points[nearestPointIndex].selected = true;

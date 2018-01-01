@@ -35,7 +35,9 @@ void ofApp::setup() {
 	setupControlPanel();
 
 	referenceMeshPoints.setAutoMark(false);
+	referenceMeshPoints.setAllowMultiSelect(false);
 	placedPoints.setAutoMark(false);
+	placedPoints.setAllowMultiSelect(false);
 
 	referenceMeshPoints.disableDrawEvent();
 	referenceMeshPoints.enableControlEvents();
@@ -147,6 +149,10 @@ void ofApp::keyPressed(int key) {
 
 			referenceMeshPoints.deselectAll();
 
+			vector<unsigned int> selectedPoints = placedPoints.getSelected();
+			for (unsigned int const& selectedPoint : selectedPoints) {
+				referenceMeshPoints.setSelected(pointIndices[selectedPoint], true);
+			}
 		} else {
 			referenceMeshPoints.disableControlEvents();
 			placedPoints.enableControlEvents();
