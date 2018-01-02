@@ -115,7 +115,7 @@ void ofApp::draw() {
 }
 
 void ofApp::keyPressed(int key) {
-	if(key == OF_KEY_BACKSPACE) { // delete selected
+	if(key == OF_KEY_BACKSPACE || key == OF_KEY_DEL) { // delete selected
 		if (getb("selectionMode")) {
 			vector<unsigned int> selectedPoints = referenceMeshPoints.getSelected();
 			reverse(selectedPoints.begin(), selectedPoints.end());
@@ -127,6 +127,8 @@ void ofApp::keyPressed(int key) {
 						unsigned int placedPointIndex = result - pointIndices.begin();
 						placedPoints.remove(placedPointIndex);
 						pointIndices.erase(pointIndices.begin() + placedPointIndex);
+						objectPoints.erase(objectPoints.begin() + placedPointIndex);
+						imagePoints.erase(imagePoints.begin() + placedPointIndex);
 					}
 				}
 			}
@@ -137,6 +139,8 @@ void ofApp::keyPressed(int key) {
 				referenceMeshPoints.get((pointIndices[selectedPoint])).marked = false;
 				placedPoints.remove(selectedPoint);
 				pointIndices.erase(pointIndices.begin() + selectedPoint);
+				objectPoints.erase(objectPoints.begin() + selectedPoint);
+				imagePoints.erase(imagePoints.begin() + selectedPoint);
 			}
 		}
 	}
@@ -169,7 +173,7 @@ void ofApp::keyPressed(int key) {
 					} else {
 						newPoint = ofVec2f(ofGetMouseX(), ofGetMouseY());
 					}
-					objectPoints.push_back(toCv(objectMesh.getVertex(selectedPoint)));
+					objectPoints.push_back(toCv(referenceMesh.getVertex(selectedPoint)));
 					imagePoints.push_back(toCv(newPoint));
 					placedPoints.add(newPoint);
 
@@ -394,22 +398,29 @@ void ofApp::updateSelectionMode() {
 }
 
 void ofApp::updateRenderMode() {
-	float aov = getf("aov");
+	if (getb("setupMode")) {
+		float aov = getf("aov");
 
-	// generate flags
-	#define getFlag(flag) (panel.getValueB((#flag)) ? flag : 0)
-	int flags =
-		CV_CALIB_USE_INTRINSIC_GUESS |
-		getFlag(CV_CALIB_FIX_PRINCIPAL_POINT) |
-		getFlag(CV_CALIB_FIX_ASPECT_RATIO) |
-		getFlag(CV_CALIB_FIX_K1) |
-		getFlag(CV_CALIB_FIX_K2) |
-		getFlag(CV_CALIB_FIX_K3) |
-		getFlag(CV_CALIB_ZERO_TANGENT_DIST);
+		// generate flags
+#define getFlag(flag) (panel.getValueB((#flag)) ? flag : 0)
+		int flags =
+			CV_CALIB_USE_INTRINSIC_GUESS |
+			getFlag(CV_CALIB_FIX_PRINCIPAL_POINT) |
+			getFlag(CV_CALIB_FIX_ASPECT_RATIO) |
+			getFlag(CV_CALIB_FIX_K1) |
+			getFlag(CV_CALIB_FIX_K2) |
+			getFlag(CV_CALIB_FIX_K3) |
+			getFlag(CV_CALIB_ZERO_TANGENT_DIST);
 
-	if (dataChanged) {
-		mapamok.calibrate(ofGetWidth(), ofGetHeight(), imagePoints, objectPoints, flags, aov);
-		dataChanged = false;
+		dataChanged = true; // TODO: set dataChanged when adding/removing/moving placedPoints.
+		if (dataChanged) {
+			for (std::vector<int>::size_type i = 0; i != imagePoints.size(); i++) {
+				imagePoints[i] = toCv(placedPoints.get(i).position);
+			}
+
+			mapamok.calibrate(ofGetWidth(), ofGetHeight(), imagePoints, objectPoints, flags, aov);
+			dataChanged = false;
+		}
 	}
 }
 
