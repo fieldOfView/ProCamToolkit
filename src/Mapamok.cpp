@@ -34,24 +34,52 @@ void Mapamok::calibrate(int width, int height, vector<cv::Point2f>& imagePoints,
 }
 
 void Mapamok::begin() {
-	if (calibrationReady) {
-		glPushMatrix();
-		glMatrixMode(GL_PROJECTION);
-		glPushMatrix();
-		glMatrixMode(GL_MODELVIEW);
-		intrinsics.loadProjectionMatrix(nearDist, farDist);
-		ofxCv::applyMatrix(modelMatrix);
+	if (!calibrationReady) {
+		return;
 	}
+	ofPushMatrix();
+	ofSetMatrixMode(OF_MATRIX_PROJECTION);
+	ofPushMatrix();
+	ofSetMatrixMode(OF_MATRIX_MODELVIEW);
+	intrinsics.loadProjectionMatrix(nearDist, farDist);
+	ofMultMatrix(modelMatrix);
 }
 
 void Mapamok::end() {
-	if (calibrationReady) {
-		glPopMatrix();
-		glMatrixMode(GL_PROJECTION);
-		glPopMatrix();
-		glMatrixMode(GL_MODELVIEW);
+	if (!calibrationReady) {
+		return;
 	}
+	ofPopMatrix();
+	ofSetMatrixMode(OF_MATRIX_PROJECTION);
+	ofPopMatrix();
+	ofSetMatrixMode(OF_MATRIX_MODELVIEW);
 }
+
+ofVec3f Mapamok::worldToScreen(ofVec3f WorldXYZ, ofRectangle viewport) {
+	if (!calibrationReady) {
+		return WorldXYZ;
+	}
+
+	if (viewport.isZero()) {
+		viewport = ofGetCurrentViewport();
+	}
+
+	begin();
+	ofMatrix4x4 modelViewMatrix = ofGetCurrentMatrix(OF_MATRIX_MODELVIEW);
+	ofMatrix4x4 projectionMatrix = ofGetCurrentMatrix(OF_MATRIX_PROJECTION);
+	end();
+
+	ofVec3f CameraXYZ = WorldXYZ * modelViewMatrix * projectionMatrix;
+	ofVec3f ScreenXYZ;
+
+	ScreenXYZ.x = (CameraXYZ.x + 1.0f) / 2.0f * viewport.width + viewport.x;
+	ScreenXYZ.y = (1.0f - CameraXYZ.y) / 2.0f * viewport.height + viewport.y;
+
+	ScreenXYZ.z = CameraXYZ.z;
+
+	return ScreenXYZ;
+}
+
 
 void Mapamok::load(string fileName) {
 	// load the calibration-advanced yml

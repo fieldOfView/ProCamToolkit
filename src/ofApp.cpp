@@ -167,7 +167,9 @@ void ofApp::keyPressed(int key) {
 					// new point
 					ofVec2f newPoint;
 					if (mapamok.calibrationReady) {
-
+						ofVec3f imagePoint = referenceMesh.getVertex(selectedPoint);
+						imagePoint = mapamok.worldToScreen(imagePoint);
+						newPoint = ofVec2f(imagePoint);
 					} else {
 						newPoint = ofVec2f(ofGetMouseX(), ofGetMouseY());
 					}
@@ -460,9 +462,6 @@ void ofApp::drawRenderMode() {
 		mapamok.begin();
 
 		render();
-		if (getb("setupMode")) {
-			imageMesh = getProjectedMesh(referenceMesh);
-		}
 
 		mapamok.end();
 	}

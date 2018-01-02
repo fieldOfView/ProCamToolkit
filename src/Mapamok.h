@@ -12,9 +12,10 @@ public:
 	void calibrate(int width, int height, vector<cv::Point2f>& imagePoints, vector<cv::Point3f>& objectPoints, int flags, float aov = 80);
 
 	void begin();
-
 	void end();
 
+	ofVec3f worldToScreen(ofVec3f WorldXYZ, ofRectangle viewport = ofRectangle());
+	
 	void load(string fileName);
 	void save(string fileName, string fileNameSummary = "");
 	void reset();
