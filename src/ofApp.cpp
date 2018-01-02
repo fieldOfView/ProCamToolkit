@@ -128,7 +128,6 @@ void ofApp::keyPressed(int key) {
 						placedPoints.remove(placedPointIndex);
 						pointIndices.erase(pointIndices.begin() + placedPointIndex);
 						objectPoints.erase(objectPoints.begin() + placedPointIndex);
-						imagePoints.erase(imagePoints.begin() + placedPointIndex);
 					}
 				}
 			}
@@ -140,7 +139,6 @@ void ofApp::keyPressed(int key) {
 				placedPoints.remove(selectedPoint);
 				pointIndices.erase(pointIndices.begin() + selectedPoint);
 				objectPoints.erase(objectPoints.begin() + selectedPoint);
-				imagePoints.erase(imagePoints.begin() + selectedPoint);
 			}
 		}
 	}
@@ -174,7 +172,6 @@ void ofApp::keyPressed(int key) {
 						newPoint = ofVec2f(ofGetMouseX(), ofGetMouseY());
 					}
 					objectPoints.push_back(toCv(referenceMesh.getVertex(selectedPoint)));
-					imagePoints.push_back(toCv(newPoint));
 					placedPoints.add(newPoint);
 
 					unsigned int newPlacedPointIndex = placedPoints.size() - 1;
@@ -203,6 +200,7 @@ void ofApp::setupMesh(string fileName) {
 	objectMesh = ofVboMesh();
 	ofFile meshFile(fileName);
 	if (meshFile.exists()) {
+		ofxAssimpModelLoader model;
 		model.loadModel(fileName);
 		vector<ofMesh> meshes = getMeshes(model);
 
@@ -220,7 +218,6 @@ void ofApp::setupMesh(string fileName) {
 	}
 
 	objectPoints.clear();
-	imagePoints.clear();
 	pointIndices.clear();
 	dataChanged = true;
 }
@@ -294,6 +291,11 @@ void ofApp::saveCalibration() {
 		return;
 	}
 
+	vector<Point2f> imagePoints;
+	for (std::vector<int>::size_type i = 0; i != placedPoints.size(); i++) {
+		imagePoints.push_back(toCv(placedPoints.get(i).position));
+	}
+
 	fs << "objectPoints" << objectPoints;
 	fs << "imagePoints" << imagePoints;
 	fs << "pointIndices" << vector<int>(pointIndices.begin(), pointIndices.end());
@@ -332,10 +334,21 @@ void ofApp::loadCalibration() {
 	}
 
 	vector<int> pointIndicesSigned;
+	vector<Point2f> imagePoints;
+
 	fs["objectPoints"] >> objectPoints;
 	fs["imagePoints"] >> imagePoints;
 	fs["pointIndices"] >> pointIndicesSigned;
 	pointIndices = vector<unsigned int>(pointIndicesSigned.begin(), pointIndicesSigned.end());
+
+	placedPoints.clear();
+	for (std::vector<int>::size_type i = 0; i != imagePoints.size(); i++) {
+		placedPoints.add(toOf(imagePoints[i]));
+	}
+	referenceMeshPoints.deselectAll(false);
+	for (auto const& index: pointIndices) {
+		referenceMeshPoints.get(index).marked = true;
+	}
 
 	mapamok.load(calibPath + "/calibration.yml");
 	dataChanged = false;
@@ -343,8 +356,9 @@ void ofApp::loadCalibration() {
 
 void ofApp::resetCalibration() {
 	objectPoints.clear();
-	imagePoints.clear();
 	pointIndices.clear();
+	placedPoints.clear();
+	referenceMeshPoints.deselectAll(false);
 
 	mapamok.reset();
 }
@@ -414,8 +428,9 @@ void ofApp::updateRenderMode() {
 
 		dataChanged = true; // TODO: set dataChanged when adding/removing/moving placedPoints.
 		if (dataChanged) {
-			for (std::vector<int>::size_type i = 0; i != imagePoints.size(); i++) {
-				imagePoints[i] = toCv(placedPoints.get(i).position);
+			vector<Point2f> imagePoints;
+			for (std::vector<int>::size_type i = 0; i != placedPoints.size(); i++) {
+				imagePoints.push_back(toCv(placedPoints.get(i).position));
 			}
 
 			mapamok.calibrate(ofGetWidth(), ofGetHeight(), imagePoints, objectPoints, flags, aov);

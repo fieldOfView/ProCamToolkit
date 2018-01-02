@@ -38,7 +38,6 @@ public:
 	void resetCalibration();
 
 	Mapamok mapamok;
-	ofxAssimpModelLoader model;
 	ofEasyCam cam;
 	ofVboMesh objectMesh;
 	ofVboMesh referenceMesh;
@@ -47,7 +46,6 @@ public:
 	ofxAutoControlPanel panel;
 
 	vector<cv::Point3f> objectPoints;
-	vector<cv::Point2f> imagePoints;
 	vector<unsigned int> pointIndices;
 
 	DraggablePoints placedPoints;

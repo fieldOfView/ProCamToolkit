@@ -58,9 +58,12 @@ public:
         points.clear();
         selected.clear();
     }
-	void deselectAll() {
+	void deselectAll(bool keepMark = true) {
 		for (auto itr = points.begin(); itr != points.end(); itr++) {
 			(*itr).selected = false;
+			if (!keepMark) {
+				(*itr).marked = false;
+			}
 		}
 		selected.clear();
 	}

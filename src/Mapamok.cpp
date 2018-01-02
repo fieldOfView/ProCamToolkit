@@ -12,12 +12,10 @@ void Mapamok::calibrate(int width, int height, vector<cv::Point2f>& imagePoints,
 	}
 	vector<cv::Mat> rvecs, tvecs;
 	cv::Mat distCoeffs;
-	vector<vector<cv::Point3f> > objectPointsCv(1);
-	vector<vector<cv::Point2f> > imagePointsCv(1);
-	for (int i = 0; i < n; i++) {
-		objectPointsCv[0].push_back(objectPoints[i]);
-		imagePointsCv[0].push_back(imagePoints[i]);
-	}
+	vector<vector<cv::Point3f> > objectPointsCv;
+	vector<vector<cv::Point2f> > imagePointsCv;
+	objectPointsCv.push_back(objectPoints);
+	imagePointsCv.push_back(imagePoints);
 
 	cv::Size2i imageSize(width, height);
 	float f = imageSize.width * ofDegToRad(aov); // this might be wrong, but it's optimized out
