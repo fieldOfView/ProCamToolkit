@@ -1,5 +1,4 @@
 #include "ofApp.h"
-#include "MeshUtils.h"
 
 
 using namespace ofxCv;
@@ -33,35 +32,19 @@ void ofApp::setup() {
 	shader.setup("shader");
 
 	setupControlPanel();
-
-	referenceMeshPoints.setAutoMark(false);
-	referenceMeshPoints.setAllowMultiSelect(false);
-	placedPoints.setAutoMark(false);
-	placedPoints.setAllowMultiSelect(false);
-
-	referenceMeshPoints.disableDrawEvent();
-	referenceMeshPoints.enableControlEvents();
-	placedPoints.disableDrawEvent();
-	placedPoints.disableControlEvents();
-
-	referenceMeshPoints.setClickRadius(8);
-	placedPoints.setClickRadius(8);
 }
 
 void ofApp::update() {
-	if(getb("randomLighting")) {
-		setf("lightX", ofSignedNoise(ofGetElapsedTimef(), 1, 1) * 1000);
-		setf("lightY", ofSignedNoise(1, ofGetElapsedTimef(), 1) * 1000);
-		setf("lightZ", ofSignedNoise(1, 1, ofGetElapsedTimef()) * 1000);
-	}
-	light.setPosition(getf("lightX"), getf("lightY"), getf("lightZ"));
+	referencePoints.enabled = getb("setupMode");
 
-	if(getb("selectionMode")) {
-		updateSelectionMode();
-		cam.enableMouseInput();
-	} else {
-		updateRenderMode();
-		cam.disableMouseInput();
+	if (getb("selectionMode") != referencePoints.selectPoints) {
+		referencePoints.setState(getb("selectionMode"));
+	}
+	if (getb("selectionMode")) {
+		referencePoints.camera.enableMouseInput();
+	}
+	else {
+		referencePoints.camera.disableMouseInput();
 	}
 
 	if (getb("loadCalibration")) {
@@ -76,6 +59,31 @@ void ofApp::update() {
 		resetCalibration();
 		setb("resetCalibration", false);
 	}
+
+	if (getb("setupMode") && !getb("selectionMode")) {
+		// TODO: set dataChanged when adding/removing/moving placedPoints.
+		// generate flags
+#define getFlag(flag) (panel.getValueB((#flag)) ? flag : 0)
+		int flags =
+			CV_CALIB_USE_INTRINSIC_GUESS |
+			getFlag(CV_CALIB_FIX_PRINCIPAL_POINT) |
+			getFlag(CV_CALIB_FIX_ASPECT_RATIO) |
+			getFlag(CV_CALIB_FIX_K1) |
+			getFlag(CV_CALIB_FIX_K2) |
+			getFlag(CV_CALIB_FIX_K3) |
+			getFlag(CV_CALIB_ZERO_TANGENT_DIST);
+
+		referencePoints.calibrate(flags);
+	}
+
+	if (getb("randomLighting")) {
+		setf("lightX", ofSignedNoise(ofGetElapsedTimef(), 1, 1) * 1000);
+		setf("lightY", ofSignedNoise(1, ofGetElapsedTimef(), 1) * 1000);
+		setf("lightZ", ofSignedNoise(1, 1, ofGetElapsedTimef()) * 1000);
+	}
+	light.setPosition(getf("lightX"), getf("lightY"), getf("lightZ"));
+
+	referencePoints.update();
 }
 
 void ofApp::draw() {
@@ -83,18 +91,28 @@ void ofApp::draw() {
 
 	string message = "";
 
-	if (referenceMesh.getNumIndices() > 0) {
+	if (objectMesh.getNumIndices() > 0) {
 		if (getb("selectionMode")) {
-			drawSelectionMode();
+			referencePoints.camera.begin();
+
+			render();
+
+			referencePoints.camera.end();
+		} else {
+			if (referencePoints.mapamok.calibrationReady) {
+				referencePoints.mapamok.begin();
+
+				render();
+
+				referencePoints.mapamok.end();
+			}
 		}
-		else {
-			drawRenderMode();
-		}
-	}
-	else {
+		referencePoints.draw();
+	} else {
 		if (message != "") message += "\n";
 		message += "No model loaded.";
 	}
+
 	if (!shader.isLoaded()) {
 		if (message != "") message += "\n";
 		message += "Shader failed to load.";
@@ -116,85 +134,11 @@ void ofApp::draw() {
 
 void ofApp::keyPressed(int key) {
 	if(key == OF_KEY_BACKSPACE || key == OF_KEY_DEL) { // delete selected
-		if (getb("selectionMode")) {
-			vector<unsigned int> selectedPoints = referenceMeshPoints.getSelected();
-			reverse(selectedPoints.begin(), selectedPoints.end());
-			for (unsigned int const& selectedPoint : selectedPoints) {
-				if (referenceMeshPoints.get(selectedPoint).marked) {
-					referenceMeshPoints.get(selectedPoint).marked = false;
-					auto result = find(pointIndices.begin(), pointIndices.end(), selectedPoint);
-					if (result != pointIndices.end()) {
-						unsigned int placedPointIndex = result - pointIndices.begin();
-						placedPoints.remove(placedPointIndex);
-						pointIndices.erase(pointIndices.begin() + placedPointIndex);
-						objectPoints.erase(objectPoints.begin() + placedPointIndex);
-					}
-				}
-			}
-		} else {
-			vector<unsigned int> selectedPoints = placedPoints.getSelected();
-			reverse(selectedPoints.begin(), selectedPoints.end());
-			for (unsigned int const& selectedPoint : selectedPoints) {
-				referenceMeshPoints.get((pointIndices[selectedPoint])).marked = false;
-				placedPoints.remove(selectedPoint);
-				pointIndices.erase(pointIndices.begin() + selectedPoint);
-				objectPoints.erase(objectPoints.begin() + selectedPoint);
-			}
-		}
+		referencePoints.removeSelected();
 	}
 
 	if(key == ' ') { // toggle render/select mode
 		setb("selectionMode", !getb("selectionMode"));
-		if (getb("selectionMode")) {
-			referenceMeshPoints.enableControlEvents();
-			placedPoints.disableControlEvents();
-
-			referenceMeshPoints.deselectAll();
-
-			vector<unsigned int> selectedPoints = placedPoints.getSelected();
-			for (unsigned int const& selectedPoint : selectedPoints) {
-				referenceMeshPoints.setSelected(pointIndices[selectedPoint], true);
-			}
-		} else {
-			referenceMeshPoints.disableControlEvents();
-			placedPoints.enableControlEvents();
-
-			placedPoints.deselectAll();
-
-			vector<unsigned int> selectedPoints = referenceMeshPoints.getSelected();
-			for (unsigned int const& selectedPoint : selectedPoints) {
-				if (!referenceMeshPoints.get(selectedPoint).marked) {
-					// new point
-					ofVec2f newPoint;
-					if (mapamok.calibrationReady) {
-						ofVec3f imagePoint = referenceMesh.getVertex(selectedPoint);
-						imagePoint = mapamok.worldToScreen(imagePoint);
-						newPoint = ofVec2f(imagePoint);
-					} else {
-						newPoint = ofVec2f(ofGetMouseX(), ofGetMouseY());
-					}
-					objectPoints.push_back(toCv(referenceMesh.getVertex(selectedPoint)));
-					placedPoints.add(newPoint);
-
-					unsigned int newPlacedPointIndex = placedPoints.size() - 1;
-					pointIndices.push_back(selectedPoint);
-
-					referenceMeshPoints.get(selectedPoint).marked = true;
-
-					placedPoints.setSelected(newPlacedPointIndex, true);
-				} else {
-					// point was already placed
-
-					unsigned int previouslyPlacedPointIndex = -1;
-					auto result = find(pointIndices.begin(), pointIndices.end(), selectedPoint);
-					if (result != pointIndices.end()) {
-						previouslyPlacedPointIndex = result - pointIndices.begin();
-
-						placedPoints.setSelected(previouslyPlacedPointIndex, true);
-					}
-				}
-			}
-		}
 	}
 }
 
@@ -210,18 +154,8 @@ void ofApp::setupMesh(string fileName) {
 		objectMesh = ofVboMesh();
 		objectMesh = joinMeshes(meshes);
 	}
-
-	referenceMesh = ofVboMesh(objectMesh);
-	referenceMesh = mergeNearbyVertices(referenceMesh, selectionMergeTolerance);
-
-	referenceMeshPoints.clear();
-	for (std::vector<int>::size_type index = 0; index != referenceMesh.getNumVertices(); index++) {
-		referenceMeshPoints.add(ofVec2f());
-	}
-
-	objectPoints.clear();
-	pointIndices.clear();
-	dataChanged = true;
+	
+	referencePoints.setup(objectMesh);
 }
 
 void ofApp::render() {
@@ -285,22 +219,8 @@ void ofApp::saveCalibration() {
 	ofDirectory dir(dirName);
 	dir.create(true);
 
-	mapamok.save(dirName + "calibration.yml", dirName + "summary.txt");
-
-	FileStorage fs(ofToDataPath(dirName + "pointdata.yml"), FileStorage::WRITE);
-	if (!fs.isOpened()) {
-		ofLogError() << "could not open pointdata file for writing";
-		return;
-	}
-
-	vector<Point2f> imagePoints;
-	for (std::vector<int>::size_type i = 0; i != placedPoints.size(); i++) {
-		imagePoints.push_back(toCv(placedPoints.get(i).position));
-	}
-
-	fs << "objectPoints" << objectPoints;
-	fs << "imagePoints" << imagePoints;
-	fs << "pointIndices" << vector<int>(pointIndices.begin(), pointIndices.end());
+	referencePoints.mapamok.save(dirName + "calibration.yml", dirName + "summary.txt");
+	referencePoints.save(dirName + "pointdata.yml");
 }
 
 void ofApp::loadCalibration() {
@@ -329,40 +249,13 @@ void ofApp::loadCalibration() {
 		return;
 	}
 
-	FileStorage fs(ofToDataPath(calibPath + "/pointdata.yml", true), FileStorage::READ);
-	if (!fs.isOpened()) {
-		ofLogError() << "could not open pointdata file for reading";
-		return;
-	}
-
-	vector<int> pointIndicesSigned;
-	vector<Point2f> imagePoints;
-
-	fs["objectPoints"] >> objectPoints;
-	fs["imagePoints"] >> imagePoints;
-	fs["pointIndices"] >> pointIndicesSigned;
-	pointIndices = vector<unsigned int>(pointIndicesSigned.begin(), pointIndicesSigned.end());
-
-	placedPoints.clear();
-	for (std::vector<int>::size_type i = 0; i != imagePoints.size(); i++) {
-		placedPoints.add(toOf(imagePoints[i]));
-	}
-	referenceMeshPoints.deselectAll(false);
-	for (auto const& index: pointIndices) {
-		referenceMeshPoints.get(index).marked = true;
-	}
-
-	mapamok.load(calibPath + "/calibration.yml");
-	dataChanged = false;
+	referencePoints.mapamok.load(calibPath + "/calibration.yml");
+	referencePoints.load(calibPath + "/pointdata.yml");
 }
 
 void ofApp::resetCalibration() {
-	objectPoints.clear();
-	pointIndices.clear();
-	placedPoints.clear();
-	referenceMeshPoints.deselectAll(false);
-
-	mapamok.reset();
+	referencePoints.mapamok.reset();
+	referencePoints.reset();
 }
 
 void ofApp::setupControlPanel() {
@@ -378,16 +271,6 @@ void ofApp::setupControlPanel() {
 	panel.addToggle("saveCalibration", false);
 	panel.addToggle("resetCalibration", false);
 
-	panel.addPanel("Calibration");
-	panel.addSlider("scale", 1, .1, 25);
-	panel.addSlider("aov", 80, 50, 100);
-	panel.addToggle("CV_CALIB_FIX_ASPECT_RATIO", true);
-	panel.addToggle("CV_CALIB_FIX_K1", true);
-	panel.addToggle("CV_CALIB_FIX_K2", true);
-	panel.addToggle("CV_CALIB_FIX_K3", true);
-	panel.addToggle("CV_CALIB_ZERO_TANGENT_DIST", true);
-	panel.addToggle("CV_CALIB_FIX_PRINCIPAL_POINT", false);
-
 	panel.addPanel("Rendering");
 	panel.addSlider("lineWidth", 1, 1, 8, true);
 	panel.addToggle("useSmoothing", false);
@@ -399,75 +282,13 @@ void ofApp::setupControlPanel() {
 	panel.addSlider("lightY", 400, -1000, 1000);
 	panel.addSlider("lightZ", 800, -1000, 1000);
 	panel.addToggle("randomLighting", false);
+
+	panel.addPanel("Calibration");
+	panel.addToggle("CV_CALIB_FIX_ASPECT_RATIO", true);
+	panel.addToggle("CV_CALIB_FIX_K1", true);
+	panel.addToggle("CV_CALIB_FIX_K2", true);
+	panel.addToggle("CV_CALIB_FIX_K3", true);
+	panel.addToggle("CV_CALIB_ZERO_TANGENT_DIST", true);
+	panel.addToggle("CV_CALIB_FIX_PRINCIPAL_POINT", false);
 }
 
-void ofApp::updateSelectionMode() {
-	if (getb("setupMode")) {
-		// TODO: only do this if the camera has changed
-		imageMesh = ofVboMesh(referenceMesh);
-		project(imageMesh, cam, ofGetCurrentViewport());
-		vector<ofPoint> imageMeshPoints = imageMesh.getVertices();
-		for (std::vector<int>::size_type index = 0; index != imageMeshPoints.size(); index++) {
-			referenceMeshPoints.get(index).position = ofVec2f(imageMeshPoints[index].x, imageMeshPoints[index].y);
-		}
-	}
-}
-
-void ofApp::updateRenderMode() {
-	if (getb("setupMode")) {
-		float aov = getf("aov");
-
-		// generate flags
-#define getFlag(flag) (panel.getValueB((#flag)) ? flag : 0)
-		int flags =
-			CV_CALIB_USE_INTRINSIC_GUESS |
-			getFlag(CV_CALIB_FIX_PRINCIPAL_POINT) |
-			getFlag(CV_CALIB_FIX_ASPECT_RATIO) |
-			getFlag(CV_CALIB_FIX_K1) |
-			getFlag(CV_CALIB_FIX_K2) |
-			getFlag(CV_CALIB_FIX_K3) |
-			getFlag(CV_CALIB_ZERO_TANGENT_DIST);
-
-		dataChanged = true; // TODO: set dataChanged when adding/removing/moving placedPoints.
-		if (dataChanged) {
-			vector<Point2f> imagePoints;
-			for (std::vector<int>::size_type i = 0; i != placedPoints.size(); i++) {
-				imagePoints.push_back(toCv(placedPoints.get(i).position));
-			}
-
-			mapamok.calibrate(ofGetWidth(), ofGetHeight(), imagePoints, objectPoints, flags, aov);
-			dataChanged = false;
-		}
-	}
-}
-
-
-void ofApp::drawSelectionMode() {
-	cam.begin();
-	
-	float scale = getf("scale");
-	ofScale(scale, scale, scale);
-
-	render();
-
-	cam.end();
-
-	if (getb("setupMode")) {
-		referenceMeshPoints.draw(ofEventArgs());
-	}
-}
-
-void ofApp::drawRenderMode() {
-	if (mapamok.calibrationReady) {
-		mapamok.begin();
-
-		render();
-
-		mapamok.end();
-	}
-
-
-	if (getb("setupMode")) {
-		placedPoints.draw(ofEventArgs());
-	}
-}

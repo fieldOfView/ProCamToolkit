@@ -4,9 +4,8 @@
 #include "ofxCv.h"
 #include "ofxAssimpModelLoader.h"
 #include "ofxAutoControlPanel.h"
-#include "Mapamok.h"
-#include "SelectablePoints.h"
-#include "DraggablePoints.h"
+#include "MeshUtils.h"
+#include "ReferencePoints.h"
 #include "LineArt.h"
 #include "AutoShader.h"
 
@@ -27,33 +26,18 @@ public:
 	void setupControlPanel();
 	void setupMesh(string fileName);
 
-	void updateSelectionMode();
-	void updateRenderMode();
-	void drawSelectionMode();
-	void drawRenderMode();
 	void render();
 
 	void loadCalibration();
 	void saveCalibration();
 	void resetCalibration();
 
-	Mapamok mapamok;
-	ofEasyCam cam;
-	ofVboMesh objectMesh;
-	ofVboMesh referenceMesh;
-	ofMesh imageMesh;
-	ofLight light;
 	ofxAutoControlPanel panel;
+	ofVboMesh objectMesh;
 
-	vector<cv::Point3f> objectPoints;
-	vector<unsigned int> pointIndices;
-
-	DraggablePoints placedPoints;
-	SelectablePoints referenceMeshPoints;
-
+	ofLight light;
 	AutoShader shader;
 
 private:
-	const float selectionMergeTolerance = .01;
-	bool dataChanged = false;
+	ReferencePoints referencePoints;
 };
