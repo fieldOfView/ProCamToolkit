@@ -25,8 +25,8 @@ float ofApp::getf(string name) {
 
 void ofApp::setup() {
 	ofSetWindowTitle("mapamok");
-	ofSetDrawBitmapMode(OF_BITMAPMODE_MODEL_BILLBOARD);
 	ofSetVerticalSync(true);
+	ofBackground(0);
 
 	setupMesh("model.dae");
 	shader.setup("shader");
@@ -81,8 +81,6 @@ void ofApp::update() {
 }
 
 void ofApp::draw() {
-	ofBackground(geti("backgroundColor"));
-
 	string message = "";
 
 	if (objectMesh.getNumIndices() > 0) {
@@ -273,10 +271,6 @@ void ofApp::setupControlPanel() {
 	panel.addPanel("Rendering");
 	panel.addSlider("lineWidth", 1, 1, 8, true);
 	panel.addToggle("useSmoothing", false);
-	panel.addSlider("backgroundColor", 0, 0, 255, true);
-	panel.addSlider("screenPointSize", 2, 1, 16, true);
-	panel.addSlider("selectedPointSize", 8, 1, 16, true);
-	panel.addSlider("selectionRadius", 12, 1, 32);
 	panel.addSlider("lightX", 200, -1000, 1000);
 	panel.addSlider("lightY", 400, -1000, 1000);
 	panel.addSlider("lightZ", 800, -1000, 1000);
