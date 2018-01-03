@@ -7,6 +7,7 @@
 #include "SelectablePoints.h"
 #include "ofxCv.h"
 #include "Mapamok.h"
+#include "MeshUtils.h"
 
 class ReferencePoints
 {

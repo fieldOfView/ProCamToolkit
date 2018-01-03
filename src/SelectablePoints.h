@@ -8,13 +8,16 @@ protected:
 	vector<DraggablePoint> points;
 	set<unsigned int> selected;
 	
-	float clickRadiusSquared;
 	bool allowMultiSelect, autoMark;
+
+	// { SIZE_CLICK_RADIUS_SQUARED, SIZE_DOT_RADIUS, SIZE_SELECTED_DOT_RADIUS, SIZE_SELECTED_CIRCLE_RADIUS, SIZE_SELECTED_CIRCLE_THICKNESS };
+	vector<float> sizes = { 64, 4., 1., 10., 2. };
+	// { COLOR_NORMAL, COLOR_MARKED, COLOR_SELECTED, COLOR_CROSSHAIR };
+	vector<ofColor> colors = { ofColor::red, ofColor::pink, ofColor::yellow, ofColor::purple };
 
 public:
 	SelectablePoints()
-	:clickRadiusSquared(0) 
-	,allowMultiSelect(true)
+	:allowMultiSelect(true)
 	,pointsChanged(false) {
 	}
 
@@ -27,6 +30,7 @@ public:
 		points.push_back(DraggablePoint());
 		points.back().setAutoMark(autoMark);
 		points.back().position = v;
+		points.back().setTheme(sizes, colors);
 		pointsChanged = true;
 	}
 	void remove(unsigned int index) {
@@ -74,9 +78,6 @@ public:
 		}
 		selected.clear();
 	}
-	void setClickRadius(float clickRadius) {
-		this->clickRadiusSquared = clickRadius * clickRadius;
-	}
 	void setAllowMultiSelect(bool allow) {
 		this->allowMultiSelect = allow;
 	}
@@ -86,12 +87,21 @@ public:
 			points[*itr].autoMark = flag;
 		}
 	}
+
+	void setTheme(vector<float> _sizes, vector<ofColor> _colors) {
+		sizes = _sizes;
+		colors = _colors;
+		for (auto itr = points.begin(); itr != points.end(); itr++) {
+			(*itr).setTheme(sizes, colors);
+		}
+	}
+
 	void mousePressed(ofMouseEventArgs& mouse) {
 		bool shift = ofGetKeyPressed(OF_KEY_SHIFT) && allowMultiSelect;
 		int nearestPointIndex = -1;
 		float nearestPointDistanceSquared;
 		for(int i = 0; i < size(); i++) {
-			bool hit = points[i].isHit(mouse, clickRadiusSquared);
+			bool hit = points[i].isHit(mouse);
 			if(hit) {
 				float distanceSquared = points[i].position.distanceSquared(mouse);
 				if (distanceSquared < 1.0) {
@@ -123,7 +133,7 @@ public:
 	void draw(ofEventArgs& args) {
 		ofPushStyle();
 		for(int i = 0; i < size(); i++) {
-			points[i].draw(clickRadiusSquared);
+			points[i].draw();
 		}
 		ofPopStyle();
 	}

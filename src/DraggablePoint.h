@@ -4,7 +4,12 @@ class DraggablePoint {
 public:
 	ofVec2f position, positionStart;
 	bool selected, dragging, marked, autoMark;
-	
+
+	enum Sizes { SIZE_CLICK_RADIUS_SQUARED, SIZE_DOT_RADIUS, SIZE_SELECTED_DOT_RADIUS, SIZE_SELECTED_CIRCLE_RADIUS, SIZE_SELECTED_CIRCLE_THICKNESS };
+	vector<float> sizes = { 64, 4., 1., 10., 2. };
+	enum Colors { COLOR_NORMAL, COLOR_MARKED, COLOR_SELECTED, COLOR_CROSSHAIR };
+	vector<ofColor> colors = { ofColor::red, ofColor::pink, ofColor::yellow, ofColor::purple };
+
 	DraggablePoint()
 	:selected(false)
 	,dragging(false)
@@ -18,8 +23,8 @@ public:
 			marked = false;
 		}
 	}
-	bool isHit(ofVec2f v, float clickRadiusSquared) {
-		bool curHit = position.distanceSquared(v) < clickRadiusSquared;
+	bool isHit(ofVec2f v) {
+		bool curHit = position.distanceSquared(v) < sizes[SIZE_CLICK_RADIUS_SQUARED];
 		if(curHit && autoMark) {
 			marked = true;
 		}
@@ -31,28 +36,33 @@ public:
 	void setAutoMark(bool flag) {
 		autoMark = flag;
 	}
-	void draw(float clickRadiusSquared) {
-		float r = 2;//sqrt(clickRadiusSquared);
+	void setTheme(vector<float> _sizes, vector<ofColor> _colors) {
+		sizes = _sizes;
+		colors = _colors;
+	}
+	void draw() {
 		ofPushStyle();
 		ofNoFill();
-		ofSetLineWidth(2);
 		if(selected) {
-			ofSetColor(ofColor::yellow);
-			ofCircle(position, r + 4);
+			ofSetColor(colors[COLOR_SELECTED]);
+			ofSetLineWidth(sizes[SIZE_SELECTED_CIRCLE_THICKNESS]);
+			ofCircle(position, sizes[SIZE_SELECTED_CIRCLE_RADIUS]);
 			ofSetLineWidth(1);
-			ofSetColor(255);
+			ofSetColor(colors[COLOR_CROSSHAIR]);
 			ofLine(position.x, 0, position.x, ofGetHeight());
 			ofLine(0, position.y, ofGetWidth(), position.y);
 		}
 		ofPopStyle();
 		ofPushStyle();
 		ofFill();
+		float r = sizes[SIZE_DOT_RADIUS];
 		if (selected) {
-			ofSetColor(ofColor::yellow);
+			r = sizes[SIZE_SELECTED_DOT_RADIUS];
+			ofSetColor(colors[COLOR_SELECTED]);
 		} else if(marked) {
-			ofSetColor(ofColor::green);
+			ofSetColor(colors[COLOR_MARKED]);
 		} else {
-			ofSetColor(ofColor::red);
+			ofSetColor(colors[COLOR_NORMAL]);
 		}
 		ofCircle(position, r);
 		ofPopStyle();
