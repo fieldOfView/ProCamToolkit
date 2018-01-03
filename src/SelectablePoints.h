@@ -14,8 +14,12 @@ protected:
 public:
 	SelectablePoints()
 	:clickRadiusSquared(0) 
-	,allowMultiSelect(true) {
+	,allowMultiSelect(true)
+	,pointsChanged(false) {
 	}
+
+	bool pointsChanged;
+
 	unsigned int size() {
 		return points.size();
 	}
@@ -23,14 +27,16 @@ public:
 		points.push_back(DraggablePoint());
 		points.back().setAutoMark(autoMark);
 		points.back().position = v;
+		pointsChanged = true;
 	}
 	void remove(unsigned int index) {
 		points.erase(points.begin() + index);
 		selected.clear();
+		pointsChanged = true;
 	}
-    DraggablePoint& get(int i) {
-        return points[i];
-    }
+	DraggablePoint& get(int i) {
+		return points[i];
+	}
 	void setSelected(unsigned int index, bool select) {
 		if (points[index].selected && !select) {
 			selected.erase(index);
@@ -55,9 +61,10 @@ public:
 		return result;
 	}
 	void clear() {
-        points.clear();
-        selected.clear();
-    }
+		points.clear();
+		selected.clear();
+		pointsChanged = true;
+	}
 	void deselectAll(bool keepMark = true) {
 		for (auto itr = points.begin(); itr != points.end(); itr++) {
 			(*itr).selected = false;

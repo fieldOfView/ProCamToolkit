@@ -176,12 +176,15 @@ void ReferencePoints::removeSelected() {
 }
 
 void ReferencePoints::calibrate(int flags) {
-	vector<Point2f> imagePoints;
-	for (std::vector<int>::size_type i = 0; i != placedPoints.size(); i++) {
-		imagePoints.push_back(toCv(placedPoints.get(i).position));
-	}
+	if (placedPoints.pointsChanged) {
+		placedPoints.pointsChanged = false;
+		vector<Point2f> imagePoints;
+		for (std::vector<int>::size_type i = 0; i != placedPoints.size(); i++) {
+			imagePoints.push_back(toCv(placedPoints.get(i).position));
+		}
 
-	mapamok.calibrate(ofGetWidth(), ofGetHeight(), imagePoints, objectPoints, flags, 80);
+		mapamok.calibrate(ofGetWidth(), ofGetHeight(), imagePoints, objectPoints, flags, 80);
+	}
 }
 
 void ReferencePoints::load(string fileName) {
