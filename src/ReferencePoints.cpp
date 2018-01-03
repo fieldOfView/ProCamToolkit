@@ -44,25 +44,22 @@ void ReferencePoints::update() {
 	}
 
 	if (selectPoints) {
-		updateSelectMode();
-	}
-	else {
-		updatePlaceMode();
-	}
-}
+		ofMatrix4x4 modelViewProjectionMatrix = camera.getModelViewProjectionMatrix();
+		if (!modelViewProjectionMatrix.getRowAsVec4f(0).match(lastModelViewProjectionMatrix.getRowAsVec4f(0)) ||
+			!modelViewProjectionMatrix.getRowAsVec4f(1).match(lastModelViewProjectionMatrix.getRowAsVec4f(1)) ||
+			!modelViewProjectionMatrix.getRowAsVec4f(2).match(lastModelViewProjectionMatrix.getRowAsVec4f(2)) ||
+			!modelViewProjectionMatrix.getRowAsVec4f(3).match(lastModelViewProjectionMatrix.getRowAsVec4f(3))) {
 
-void ReferencePoints::updateSelectMode() {
-	// TODO: only do this if the camera has changed
-	ofMesh imageMesh = ofVboMesh(referenceMesh);
-	project(imageMesh, camera, ofGetCurrentViewport());
-	vector<ofPoint> imageMeshPoints = imageMesh.getVertices();
-	for (std::vector<int>::size_type index = 0; index != imageMeshPoints.size(); index++) {
-		referenceMeshPoints.get(index).position = ofVec2f(imageMeshPoints[index].x, imageMeshPoints[index].y);
+			lastModelViewProjectionMatrix = modelViewProjectionMatrix;
+
+			ofMesh imageMesh = ofVboMesh(referenceMesh);
+			project(imageMesh, camera, ofGetCurrentViewport());
+			vector<ofPoint> imageMeshPoints = imageMesh.getVertices();
+			for (std::vector<int>::size_type index = 0; index != imageMeshPoints.size(); index++) {
+				referenceMeshPoints.get(index).position = ofVec2f(imageMeshPoints[index].x, imageMeshPoints[index].y);
+			}
+		}
 	}
-}
-
-void ReferencePoints::updatePlaceMode() {
-
 }
 
 void ReferencePoints::draw() {
@@ -71,18 +68,10 @@ void ReferencePoints::draw() {
 	}
 
 	if (selectPoints) {
-		drawSelectMode();
+		referenceMeshPoints.draw(ofEventArgs());
 	} else {
-		drawPlaceMode();
+		placedPoints.draw(ofEventArgs());
 	}
-}
-
-void ReferencePoints::drawSelectMode() {
-	referenceMeshPoints.draw(ofEventArgs());
-}
-
-void ReferencePoints::drawPlaceMode() {
-	placedPoints.draw(ofEventArgs());
 }
 
 void ReferencePoints::setState(bool select) {

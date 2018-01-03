@@ -14,14 +14,8 @@ public:
 	ReferencePoints();
 
 	void setup(ofMesh mesh);
-
 	void update();
-	void updateSelectMode();
-	void updatePlaceMode();
-
 	void draw();
-	void drawSelectMode();
-	void drawPlaceMode();
 
 	void setState(bool select);
 	void removeSelected();
@@ -48,4 +42,6 @@ private:
 
 	const float selectionMergeTolerance = .01;
 	bool dataChanged = false;
+
+	ofMatrix4x4 lastModelViewProjectionMatrix;
 };
