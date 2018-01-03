@@ -89,6 +89,8 @@ void ReferencePoints::setState(bool select) {
 	selectPoints = select;
 
 	if (selectPoints) {
+		camera.enableMouseInput();
+
 		referenceMeshPoints.enableControlEvents();
 		placedPoints.disableControlEvents();
 
@@ -100,6 +102,7 @@ void ReferencePoints::setState(bool select) {
 		}
 	}
 	else {
+		camera.disableMouseInput();
 
 		referenceMeshPoints.disableControlEvents();
 		placedPoints.enableControlEvents();

@@ -40,12 +40,6 @@ void ofApp::update() {
 	if (getb("selectionMode") != referencePoints.selectPoints) {
 		referencePoints.setState(getb("selectionMode"));
 	}
-	if (getb("selectionMode")) {
-		referencePoints.camera.enableMouseInput();
-	}
-	else {
-		referencePoints.camera.disableMouseInput();
-	}
 
 	if (getb("loadCalibration")) {
 		loadCalibration();

@@ -8,22 +8,22 @@ public:
 	DraggablePoint()
 	:selected(false)
 	,dragging(false)
-    ,marked(false)
+	,marked(false)
 	,autoMark(true) {
 	}
-    void reset(bool keepMark = false) {
-        selected = false;
-        dragging = false;
+	void reset(bool keepMark = false) {
+		selected = false;
+		dragging = false;
 		if (!keepMark) {
 			marked = false;
 		}
-    }
+	}
 	bool isHit(ofVec2f v, float clickRadiusSquared) {
 		bool curHit = position.distanceSquared(v) < clickRadiusSquared;
-        if(curHit && autoMark) {
-            marked = true;
-        }
-        return curHit;
+		if(curHit && autoMark) {
+			marked = true;
+		}
+		return curHit;
 	}
 	void mark(bool mark = true) {
 		marked = mark;
@@ -39,10 +39,10 @@ public:
 		if(selected) {
 			ofSetColor(ofColor::yellow);
 			ofCircle(position, r + 4);
-            ofSetLineWidth(1);
-            ofSetColor(255);
-            ofLine(position.x, 0, position.x, ofGetHeight());
-            ofLine(0, position.y, ofGetWidth(), position.y);
+			ofSetLineWidth(1);
+			ofSetColor(255);
+			ofLine(position.x, 0, position.x, ofGetHeight());
+			ofLine(0, position.y, ofGetWidth(), position.y);
 		}
 		ofPopStyle();
 		ofPushStyle();
@@ -50,7 +50,7 @@ public:
 		if (selected) {
 			ofSetColor(ofColor::yellow);
 		} else if(marked) {
-            ofSetColor(ofColor::green);
+			ofSetColor(ofColor::green);
 		} else {
 			ofSetColor(ofColor::red);
 		}
