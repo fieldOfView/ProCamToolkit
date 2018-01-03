@@ -86,7 +86,7 @@ void ofApp::draw() {
 	string message = "";
 
 	if (objectMesh.getNumIndices() > 0) {
-		if (getb("selectionMode")) {
+		if (getb("selectionMode") && getb("setupMode")) {
 			referencePoints.camera.begin();
 
 			render();
@@ -101,7 +101,12 @@ void ofApp::draw() {
 				referencePoints.mapamok.end();
 			}
 		}
-		referencePoints.draw();
+		if (getb("setupMode")) {
+			referencePoints.draw();
+		} else if (!referencePoints.mapamok.calibrationReady) {
+			if (message != "") message += "\n";
+			message += "Calibration not complete.";
+		}
 	} else {
 		if (message != "") message += "\n";
 		message += "No model loaded.";
