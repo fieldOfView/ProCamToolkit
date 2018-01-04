@@ -25,6 +25,8 @@ ofxMapamokCalibrator::ofxMapamokCalibrator() {
 }
 
 void ofxMapamokCalibrator::setup(ofMesh mesh) {
+	displayMesh = mesh;
+
 	referenceMesh = ofVboMesh(mesh);
 	referenceMesh = mergeNearbyVertices(referenceMesh, selectionMergeTolerance);
 
@@ -68,11 +70,44 @@ void ofxMapamokCalibrator::draw() {
 		return;
 	}
 
+	ofColor transparentBlack(0, 0, 0, 0);
+
 	if (selectPoints) {
+		camera.begin();
+		drawHiddenLine(displayMesh);
+		camera.end();
+
 		referenceMeshPoints.draw(ofEventArgs());
 	} else {
+		if (mapamok.calibrationReady)
+		{
+			mapamok.begin();
+			drawHiddenLine(displayMesh);
+			mapamok.end();
+		}
+
 		placedPoints.draw(ofEventArgs());
 	}
+}
+
+void ofxMapamokCalibrator::drawHiddenLine(ofMesh mesh) {
+	glPushAttrib(GL_ALL_ATTRIB_BITS);
+
+	ofSetDepthTest(true);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+	glEnable(GL_POLYGON_OFFSET_FILL);
+	float lineWidth = ofGetStyle().lineWidth;
+	glPolygonOffset(+lineWidth, +lineWidth);
+
+	glColorMask(false, false, false, false);
+	mesh.drawFaces();
+
+	glColorMask(true, true, true, true);
+	glDisable(GL_POLYGON_OFFSET_FILL);
+	mesh.drawWireframe();
+
+	glPopAttrib();
 }
 
 void ofxMapamokCalibrator::setState(bool select) {

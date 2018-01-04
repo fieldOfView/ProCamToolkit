@@ -79,26 +79,18 @@ void ofApp::draw() {
 	string message = "";
 
 	if (objectMesh.getNumIndices() > 0) {
-		if (getb("selectionMode") && getb("setupMode")) {
-			calibrator.camera.begin();
-
-			render();
-
-			calibrator.camera.end();
+		if (getb("setupMode")) {
+			calibrator.draw();
 		} else {
 			if (calibrator.mapamok.calibrationReady) {
 				calibrator.mapamok.begin();
-
 				render();
-
 				calibrator.mapamok.end();
 			}
-		}
-		if (getb("setupMode")) {
-			calibrator.draw();
-		} else if (!calibrator.mapamok.calibrationReady) {
-			if (message != "") message += "\n";
-			message += "Calibration not complete.";
+			else {
+				if (message != "") message += "\n";
+				message += "Calibration not complete.";
+			}
 		}
 	} else {
 		if (message != "") message += "\n";

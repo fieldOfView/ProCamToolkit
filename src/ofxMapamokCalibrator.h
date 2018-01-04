@@ -33,11 +33,13 @@ public:
 	ofxMapamok mapamok;
 
 private:
+	void drawHiddenLine(ofMesh mesh);
 	cv::Point2f toCv(ofVec2f vec);
 	cv::Point3f toCv(ofVec3f vec);
 	ofVec2f toOf(cv::Point2f point);
 	ofVec3f toOf(cv::Point3f point);
 
+	ofVboMesh displayMesh;
 	ofVboMesh referenceMesh;
 	SelectablePoints referenceMeshPoints;
 
