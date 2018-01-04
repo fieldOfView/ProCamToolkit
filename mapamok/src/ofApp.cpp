@@ -257,13 +257,13 @@ void ofApp::setupControlPanel() {
 	panel.addPanel("Interaction");
 	panel.addToggle("setupMode", true);
 	panel.addToggle("selectionMode", true);
-	panel.addMultiToggle("drawMode", 3, variadic("faces")("fullWireframe")("outlineWireframe")("occludedWireframe"));
-	panel.addMultiToggle("shading", 0, variadic("none")("lights")("shader"));
 	panel.addToggle("loadCalibration", false);
 	panel.addToggle("saveCalibration", false);
 	panel.addToggle("resetCalibration", false);
 
 	panel.addPanel("Rendering");
+	panel.addMultiToggle("drawMode", 3, variadic("faces")("fullWireframe")("outlineWireframe")("occludedWireframe"));
+	panel.addMultiToggle("shading", 0, variadic("none")("lights")("shader"));
 	panel.addSlider("lineWidth", 1, 1, 8, true);
 	panel.addToggle("useSmoothing", false);
 	panel.addSlider("lightX", 200, -1000, 1000);
