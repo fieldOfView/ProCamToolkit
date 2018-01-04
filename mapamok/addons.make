@@ -1,4 +1,5 @@
 ofxAssimpModelLoader
 ofxControlPanel
+ofxMapamok
 ofxOpenCv
 ofxXmlSettings
