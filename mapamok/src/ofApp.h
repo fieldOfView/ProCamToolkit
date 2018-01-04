@@ -3,7 +3,7 @@
 #include "ofMain.h"
 #include "ofxAssimpModelLoader.h"
 #include "ofxAutoControlPanel.h"
-#include "ofxMapamokCalibration.h"
+#include "ofxMapamokCalibrator.h"
 #include "LineArt.h"
 #include "AutoShader.h"
 
@@ -38,5 +38,5 @@ public:
 	AutoShader shader;
 
 private:
-	ofxMapamokCalibration calibrator;
+	ofxMapamokCalibrator calibrator;
 };

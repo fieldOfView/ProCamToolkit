@@ -8,10 +8,10 @@
 #include "ofxMapamok.h"
 #include "MeshUtils.h"
 
-class ofxMapamokCalibration
+class ofxMapamokCalibrator
 {
 public:
-	ofxMapamokCalibration();
+	ofxMapamokCalibrator();
 
 	void setup(ofMesh mesh);
 	void update();
