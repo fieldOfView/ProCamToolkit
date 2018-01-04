@@ -182,8 +182,8 @@ void ofxMapamok::save(string fileName, string fileNameSummary) {
 	basic << "\tx: " << ofToString(principalPoint.x, 2) << endl;
 	basic << "\ty: " << ofToString(principalPoint.y, 2) << endl;
 	basic << "image size (in pixels):" << endl;
-	basic << "\tx: " << ofToString(principalPoint.x, 2) << endl;
-	basic << "\ty: " << ofToString(principalPoint.y, 2) << endl;
+	basic << "\tx: " << ofToString(imageSize.width, 2) << endl;
+	basic << "\ty: " << ofToString(imageSize.height, 2) << endl;
 }
 
 void ofxMapamok::reset() {
