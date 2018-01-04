@@ -20,9 +20,10 @@ public:
 	void update();
 	void draw();
 	void keyPressed(int key);
+	void dragEvent(ofDragInfo dragInfo);
 
 	void setupControlPanel();
-	void setupMesh(string fileName);
+	void loadModel(string fileName);
 
 	void render();
 
@@ -37,5 +38,5 @@ public:
 	AutoShader shader;
 
 private:
-	ofxMapamokCalibration referencePoints;
+	ofxMapamokCalibration calibrator;
 };

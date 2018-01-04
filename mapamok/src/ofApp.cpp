@@ -24,17 +24,17 @@ void ofApp::setup() {
 	ofSetVerticalSync(true);
 	ofBackground(0);
 
-	setupMesh("model.dae");
+	loadModel("model.dae");
 	shader.setup("shader");
 
 	setupControlPanel();
 }
 
 void ofApp::update() {
-	referencePoints.enabled = getb("setupMode");
+	calibrator.enabled = getb("setupMode");
 
-	if (getb("selectionMode") != referencePoints.selectPoints) {
-		referencePoints.setState(getb("selectionMode"));
+	if (getb("selectionMode") != calibrator.selectPoints) {
+		calibrator.setState(getb("selectionMode"));
 	}
 
 	if (getb("loadCalibration")) {
@@ -62,7 +62,7 @@ void ofApp::update() {
 			getFlag(CV_CALIB_FIX_K3) |
 			getFlag(CV_CALIB_ZERO_TANGENT_DIST);
 
-		referencePoints.calibrate(flags);
+		calibrator.calibrate(flags);
 	}
 
 	if (getb("randomLighting")) {
@@ -72,7 +72,7 @@ void ofApp::update() {
 	}
 	light.setPosition(getf("lightX"), getf("lightY"), getf("lightZ"));
 
-	referencePoints.update();
+	calibrator.update();
 }
 
 void ofApp::draw() {
@@ -80,23 +80,23 @@ void ofApp::draw() {
 
 	if (objectMesh.getNumIndices() > 0) {
 		if (getb("selectionMode") && getb("setupMode")) {
-			referencePoints.camera.begin();
+			calibrator.camera.begin();
 
 			render();
 
-			referencePoints.camera.end();
+			calibrator.camera.end();
 		} else {
-			if (referencePoints.mapamok.calibrationReady) {
-				referencePoints.mapamok.begin();
+			if (calibrator.mapamok.calibrationReady) {
+				calibrator.mapamok.begin();
 
 				render();
 
-				referencePoints.mapamok.end();
+				calibrator.mapamok.end();
 			}
 		}
 		if (getb("setupMode")) {
-			referencePoints.draw();
-		} else if (!referencePoints.mapamok.calibrationReady) {
+			calibrator.draw();
+		} else if (!calibrator.mapamok.calibrationReady) {
 			if (message != "") message += "\n";
 			message += "Calibration not complete.";
 		}
@@ -126,7 +126,7 @@ void ofApp::draw() {
 
 void ofApp::keyPressed(int key) {
 	if(key == OF_KEY_BACKSPACE || key == OF_KEY_DEL) { // delete selected
-		referencePoints.removeSelected();
+		calibrator.removeSelected();
 	}
 
 	if(key == ' ') { // toggle render/select mode
@@ -134,7 +134,14 @@ void ofApp::keyPressed(int key) {
 	}
 }
 
-void ofApp::setupMesh(string fileName) {
+void ofApp::dragEvent(ofDragInfo dragInfo) {
+	if (dragInfo.files.size() == 1) {
+		string filename = dragInfo.files[0];
+		loadModel(filename);
+	}
+}
+
+void ofApp::loadModel(string fileName) {
 	objectMesh = ofVboMesh();
 	ofFile meshFile(fileName);
 	if (meshFile.exists()) {
@@ -148,7 +155,7 @@ void ofApp::setupMesh(string fileName) {
 		}
 	}
 	
-	referencePoints.setup(objectMesh);
+	calibrator.setup(objectMesh);
 }
 
 void ofApp::render() {
@@ -212,8 +219,8 @@ void ofApp::saveCalibration() {
 	ofDirectory dir(dirName);
 	dir.create(true);
 
-	referencePoints.mapamok.save(dirName + "calibration.yml", dirName + "summary.txt");
-	referencePoints.save(dirName + "pointdata.yml");
+	calibrator.mapamok.save(dirName + "calibration.yml", dirName + "summary.txt");
+	calibrator.save(dirName + "pointdata.yml");
 }
 
 void ofApp::loadCalibration() {
@@ -242,13 +249,13 @@ void ofApp::loadCalibration() {
 		return;
 	}
 
-	referencePoints.mapamok.load(calibPath + "/calibration.yml");
-	referencePoints.load(calibPath + "/pointdata.yml");
+	calibrator.mapamok.load(calibPath + "/calibration.yml");
+	calibrator.load(calibPath + "/pointdata.yml");
 }
 
 void ofApp::resetCalibration() {
-	referencePoints.mapamok.reset();
-	referencePoints.reset();
+	calibrator.mapamok.reset();
+	calibrator.reset();
 }
 
 void ofApp::setupControlPanel() {
