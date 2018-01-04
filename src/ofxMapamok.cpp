@@ -23,10 +23,15 @@ void ofxMapamok::calibrate(int width, int height, vector<cv::Point2f>& imagePoin
 		0, 0, 1);
 
 	calibrateCamera(objectPointsCv, imagePointsCv, imageSize, cameraMatrix, distCoeffs, rvecs, tvecs, flags);
-	rvec = rvecs[0];
-	tvec = tvecs[0];
+	setData(cameraMatrix, rvecs[0], tvecs[0], imageSize);
+}
+
+void ofxMapamok::setData(cv::Mat1d cameraMatrix, cv::Mat rotation, cv::Mat translation, cv::Size2i imageSize) {
+	rvec = rotation;
+	tvec = translation;
 	intrinsics.setup(cameraMatrix, imageSize);
 	modelMatrix = makeMatrix(rvec, tvec);
+
 	calibrationReady = true;
 }
 
@@ -84,17 +89,15 @@ void ofxMapamok::load(string fileName) {
 
 	cv::Mat cameraMatrix;
 	cv::Size2i imageSize;
+	cv::Mat rotation, translation;
 	fs["cameraMatrix"] >> cameraMatrix;
 	fs["imageSize"][0] >> imageSize.width;
 	fs["imageSize"][1] >> imageSize.height;
-	fs["rotationVector"] >> rvec;
-	fs["translationVector"] >> tvec;
+	fs["rotationVector"] >> rotation;
+	fs["translationVector"] >> translation;
 
 	if (imageSize.width != 0 && imageSize.height != 0) {
-		intrinsics.setup(cameraMatrix, imageSize);
-		modelMatrix = makeMatrix(rvec, tvec);
-
-		calibrationReady = true;
+		setData(cameraMatrix, rotation, translation, imageSize);
 	}
 	else {
 		ofLogError() << "calibration does not contain image size";

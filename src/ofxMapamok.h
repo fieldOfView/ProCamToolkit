@@ -11,6 +11,7 @@ public:
 	float farDist = 2000;
 
 	void calibrate(int width, int height, vector<cv::Point2f>& imagePoints, vector<cv::Point3f>& objectPoints, int flags, float aov = 80);
+	void setData(cv::Mat1d, cv::Mat rvec, cv::Mat tvec, cv::Size2i imageSize);
 
 	void begin();
 	void end();
