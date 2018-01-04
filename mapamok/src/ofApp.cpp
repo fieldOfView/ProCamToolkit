@@ -257,6 +257,7 @@ void ofApp::setupControlPanel() {
 	panel.addPanel("Interaction");
 	panel.addToggle("setupMode", true);
 	panel.addToggle("selectionMode", true);
+	panel.addLabel("");
 	panel.addToggle("loadCalibration", false);
 	panel.addToggle("saveCalibration", false);
 	panel.addToggle("resetCalibration", false);
