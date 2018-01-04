@@ -15,7 +15,7 @@ ofxMapamokCalibration::ofxMapamokCalibration() {
 	// { SIZE_CLICK_RADIUS_SQUARED, SIZE_DOT_RADIUS, SIZE_SELECTED_DOT_RADIUS, SIZE_SELECTED_CIRCLE_RADIUS, SIZE_SELECTED_CIRCLE_THICKNESS };
 	vector<float> sizes = { 64, 4., 1., 10., 2. };
 	// { COLOR_NORMAL, COLOR_MARKED, COLOR_SELECTED, COLOR_CROSSHAIR };
-	vector<ofColor> colors = { ofColor::cyan, ofColor::yellow, ofColor::yellow, ofColor::yellow };
+	vector<ofColor> colors = { ofColor(0, 171, 236), ofColor::yellow, ofColor::yellow, ofColor::yellow };
 	referenceMeshPoints.setTheme(sizes, colors);
 	colors[0] = ofColor::yellow;
 	placedPoints.setTheme(sizes, colors);
