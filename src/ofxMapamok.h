@@ -4,7 +4,7 @@
 #include "ofxOpenCv.h"
 #include "Intrinsics.h"
 
-class Mapamok {
+class ofxMapamok {
 public:
 	bool calibrationReady;
 	float nearDist = 10;

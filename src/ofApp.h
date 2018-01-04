@@ -4,7 +4,7 @@
 #include "ofxAssimpModelLoader.h"
 #include "ofxAutoControlPanel.h"
 #include "MeshUtils.h"
-#include "ReferencePoints.h"
+#include "ofxMapamokCalibration.h"
 #include "LineArt.h"
 #include "AutoShader.h"
 
@@ -38,5 +38,5 @@ public:
 	AutoShader shader;
 
 private:
-	ReferencePoints referencePoints;
+	ofxMapamokCalibration referencePoints;
 };

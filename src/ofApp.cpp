@@ -51,7 +51,6 @@ void ofApp::update() {
 	}
 
 	if (getb("setupMode") && !getb("selectionMode")) {
-		// TODO: set dataChanged when adding/removing/moving placedPoints.
 		// generate flags
 #define getFlag(flag) (panel.getValueB((#flag)) ? flag : 0)
 		int flags =

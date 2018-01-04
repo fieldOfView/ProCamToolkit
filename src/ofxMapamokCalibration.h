@@ -5,13 +5,13 @@
 
 #include "DraggablePoints.h"
 #include "SelectablePoints.h"
-#include "Mapamok.h"
+#include "ofxMapamok.h"
 #include "MeshUtils.h"
 
-class ReferencePoints
+class ofxMapamokCalibration
 {
 public:
-	ReferencePoints();
+	ofxMapamokCalibration();
 
 	void setup(ofMesh mesh);
 	void update();
@@ -30,7 +30,7 @@ public:
 	bool selectPoints;
 
 	ofEasyCam camera;
-	Mapamok mapamok;
+	ofxMapamok mapamok;
 
 private:
 	cv::Point2f toCv(ofVec2f vec);

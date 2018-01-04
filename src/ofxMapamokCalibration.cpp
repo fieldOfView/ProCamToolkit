@@ -1,7 +1,7 @@
-#include "ReferencePoints.h"
+#include "ofxMapamokCalibration.h"
 
 
-ReferencePoints::ReferencePoints() {
+ofxMapamokCalibration::ofxMapamokCalibration() {
 	referenceMeshPoints.setAutoMark(false);
 	referenceMeshPoints.setAllowMultiSelect(false);
 	placedPoints.setAutoMark(false);
@@ -24,7 +24,7 @@ ReferencePoints::ReferencePoints() {
 	selectPoints = true;
 }
 
-void ReferencePoints::setup(ofMesh mesh) {
+void ofxMapamokCalibration::setup(ofMesh mesh) {
 	referenceMesh = ofVboMesh(mesh);
 	referenceMesh = mergeNearbyVertices(referenceMesh, selectionMergeTolerance);
 
@@ -39,7 +39,7 @@ void ReferencePoints::setup(ofMesh mesh) {
 	dataChanged = true;
 }
 
-void ReferencePoints::update() {
+void ofxMapamokCalibration::update() {
 	if (!enabled) {
 		return;
 	}
@@ -63,7 +63,7 @@ void ReferencePoints::update() {
 	}
 }
 
-void ReferencePoints::draw() {
+void ofxMapamokCalibration::draw() {
 	if (!enabled) {
 		return;
 	}
@@ -75,7 +75,7 @@ void ReferencePoints::draw() {
 	}
 }
 
-void ReferencePoints::setState(bool select) {
+void ofxMapamokCalibration::setState(bool select) {
 	selectPoints = select;
 
 	if (selectPoints) {
@@ -137,7 +137,7 @@ void ReferencePoints::setState(bool select) {
 	}
 }
 
-void ReferencePoints::removeSelected() {
+void ofxMapamokCalibration::removeSelected() {
 	if (selectPoints) {
 		// unmark currently selected reference mesh point and remove corresponding placed point
 		vector<unsigned int> selectedPoints = referenceMeshPoints.getSelected();
@@ -168,7 +168,7 @@ void ReferencePoints::removeSelected() {
 	}
 }
 
-void ReferencePoints::calibrate(int flags) {
+void ofxMapamokCalibration::calibrate(int flags) {
 	if (placedPoints.pointsChanged) {
 		placedPoints.pointsChanged = false;
 		vector<cv::Point2f> imagePoints;
@@ -180,7 +180,7 @@ void ReferencePoints::calibrate(int flags) {
 	}
 }
 
-void ReferencePoints::load(string fileName) {
+void ofxMapamokCalibration::load(string fileName) {
 	cv::FileStorage fs(ofToDataPath(fileName, true), cv::FileStorage::READ);
 	if (!fs.isOpened()) {
 		ofLogError() << "could not open pointdata file for reading";
@@ -207,7 +207,7 @@ void ReferencePoints::load(string fileName) {
 	dataChanged = false;
 }
 
-void ReferencePoints::save(string fileName) {
+void ofxMapamokCalibration::save(string fileName) {
 	cv::FileStorage fs(ofToDataPath(fileName), cv::FileStorage::WRITE);
 	if (!fs.isOpened()) {
 		ofLogError() << "could not open pointdata file for writing";
@@ -224,7 +224,7 @@ void ReferencePoints::save(string fileName) {
 	fs << "pointIndices" << vector<int>(pointIndices.begin(), pointIndices.end());
 }
 
-void ReferencePoints::reset() {
+void ofxMapamokCalibration::reset() {
 	referenceMeshPoints.deselectAll(false);
 	placedPoints.clear();
 	objectPoints.clear();
@@ -232,19 +232,19 @@ void ReferencePoints::reset() {
 	dataChanged = true;
 }
 
-cv::Point2f ReferencePoints::toCv(ofVec2f vec) {
+cv::Point2f ofxMapamokCalibration::toCv(ofVec2f vec) {
 	return cv::Point2f(vec.x, vec.y);
 }
 
-cv::Point3f ReferencePoints::toCv(ofVec3f vec) {
+cv::Point3f ofxMapamokCalibration::toCv(ofVec3f vec) {
 	return cv::Point3f(vec.x, vec.y, vec.z);
 }
 
-ofVec2f ReferencePoints::toOf(cv::Point2f point) {
+ofVec2f ofxMapamokCalibration::toOf(cv::Point2f point) {
 	return ofVec2f(point.x, point.y);
 }
 
-ofVec3f ReferencePoints::toOf(cv::Point3f point) {
+ofVec3f ofxMapamokCalibration::toOf(cv::Point3f point) {
 	return ofVec3f(point.x, point.y, point.z);
 }
 

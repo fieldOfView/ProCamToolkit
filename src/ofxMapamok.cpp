@@ -1,6 +1,6 @@
-#include "Mapamok.h"
+#include "ofxMapamok.h"
 
-void Mapamok::calibrate(int width, int height, vector<cv::Point2f>& imagePoints, vector<cv::Point3f>& objectPoints, int flags, float aov) {
+void ofxMapamok::calibrate(int width, int height, vector<cv::Point2f>& imagePoints, vector<cv::Point3f>& objectPoints, int flags, float aov) {
 	int n = imagePoints.size();
 	const static int minPoints = 6;
 	if (n < minPoints) {
@@ -30,7 +30,7 @@ void Mapamok::calibrate(int width, int height, vector<cv::Point2f>& imagePoints,
 	calibrationReady = true;
 }
 
-void Mapamok::begin() {
+void ofxMapamok::begin() {
 	if (!calibrationReady) {
 		return;
 	}
@@ -42,7 +42,7 @@ void Mapamok::begin() {
 	ofMultMatrix(modelMatrix);
 }
 
-void Mapamok::end() {
+void ofxMapamok::end() {
 	if (!calibrationReady) {
 		return;
 	}
@@ -52,7 +52,7 @@ void Mapamok::end() {
 	ofSetMatrixMode(OF_MATRIX_MODELVIEW);
 }
 
-ofVec3f Mapamok::worldToScreen(ofVec3f WorldXYZ, ofRectangle viewport) {
+ofVec3f ofxMapamok::worldToScreen(ofVec3f WorldXYZ, ofRectangle viewport) {
 	if (!calibrationReady) {
 		return WorldXYZ;
 	}
@@ -78,7 +78,7 @@ ofVec3f Mapamok::worldToScreen(ofVec3f WorldXYZ, ofRectangle viewport) {
 }
 
 
-void Mapamok::load(string fileName) {
+void ofxMapamok::load(string fileName) {
 	// load the calibration-advanced yml
 	cv::FileStorage fs(ofToDataPath(fileName, true), cv::FileStorage::READ);
 
@@ -101,7 +101,7 @@ void Mapamok::load(string fileName) {
 	}
 }
 
-void Mapamok::save(string fileName, string fileNameSummary) {
+void ofxMapamok::save(string fileName, string fileNameSummary) {
 	if (!calibrationReady) {
 		ofLogWarning() << "not enough points set to save a calibration";
 		return;
@@ -183,11 +183,11 @@ void Mapamok::save(string fileName, string fileNameSummary) {
 	basic << "\ty: " << ofToString(principalPoint.y, 2) << endl;
 }
 
-void Mapamok::reset() {
+void ofxMapamok::reset() {
 	calibrationReady = false;
 }
 
-ofMatrix4x4 Mapamok::makeMatrix(cv::Mat rotation, cv::Mat translation) {
+ofMatrix4x4 ofxMapamok::makeMatrix(cv::Mat rotation, cv::Mat translation) {
 	cv::Mat rot3x3;
 	if (rotation.rows == 3 && rotation.cols == 3) {
 		rot3x3 = rotation;
