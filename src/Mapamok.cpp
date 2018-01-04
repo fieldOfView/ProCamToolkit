@@ -1,8 +1,5 @@
 #include "Mapamok.h"
 
-using namespace ofxCv;
-using namespace cv;
-
 void Mapamok::calibrate(int width, int height, vector<cv::Point2f>& imagePoints, vector<cv::Point3f>& objectPoints, int flags, float aov) {
 	int n = imagePoints.size();
 	const static int minPoints = 6;
@@ -83,10 +80,10 @@ ofVec3f Mapamok::worldToScreen(ofVec3f WorldXYZ, ofRectangle viewport) {
 
 void Mapamok::load(string fileName) {
 	// load the calibration-advanced yml
-	FileStorage fs(ofToDataPath(fileName, true), FileStorage::READ);
+	cv::FileStorage fs(ofToDataPath(fileName, true), cv::FileStorage::READ);
 
-	Mat cameraMatrix;
-	Size2i imageSize;
+	cv::Mat cameraMatrix;
+	cv::Size2i imageSize;
 	fs["cameraMatrix"] >> cameraMatrix;
 	fs["imageSize"][0] >> imageSize.width;
 	fs["imageSize"][1] >> imageSize.height;
@@ -95,7 +92,7 @@ void Mapamok::load(string fileName) {
 
 	if (imageSize.width != 0 && imageSize.height != 0) {
 		intrinsics.setup(cameraMatrix, imageSize);
-		modelMatrix = makeMatrix(rvec, tvec);
+		modelMatrix = ofxCv::makeMatrix(rvec, tvec);
 
 		calibrationReady = true;
 	}
@@ -111,22 +108,22 @@ void Mapamok::save(string fileName, string fileNameSummary) {
 		return;
 	}
 
-	FileStorage fs(ofToDataPath(fileName), FileStorage::WRITE);
+	cv::FileStorage fs(ofToDataPath(fileName), cv::FileStorage::WRITE);
 	if (!fs.isOpened()) {
 		ofLogError() << "could not open calibration file for writing";
 		return;
 	}
 
-	Mat cameraMatrix = intrinsics.getCameraMatrix();
+	cv::Mat cameraMatrix = intrinsics.getCameraMatrix();
 	fs << "cameraMatrix" << cameraMatrix;
 
 	double focalLength = intrinsics.getFocalLength();
 	fs << "focalLength" << focalLength;
 
-	Point2d fov = intrinsics.getFov();
+	cv::Point2d fov = intrinsics.getFov();
 	fs << "fov" << fov;
 
-	Point2d principalPoint = intrinsics.getPrincipalPoint();
+	cv::Point2d principalPoint = intrinsics.getPrincipalPoint();
 	fs << "principalPoint" << principalPoint;
 
 	cv::Size imageSize = intrinsics.getImageSize();
@@ -135,20 +132,20 @@ void Mapamok::save(string fileName, string fileNameSummary) {
 	fs << "translationVector" << tvec;
 	fs << "rotationVector" << rvec;
 
-	Mat rotationMatrix;
+	cv::Mat rotationMatrix;
 	Rodrigues(rvec, rotationMatrix);
 	fs << "rotationMatrix" << rotationMatrix;
 
-	double rotationAngleRadians = norm(rvec, NORM_L2);
+	double rotationAngleRadians = norm(rvec, cv::NORM_L2);
 	double rotationAngleDegrees = ofRadToDeg(rotationAngleRadians);
-	Mat rotationAxis = rvec / rotationAngleRadians;
+	cv::Mat rotationAxis = rvec / rotationAngleRadians;
 	fs << "rotationAngleRadians" << rotationAngleRadians;
 	fs << "rotationAngleDegrees" << rotationAngleDegrees;
 	fs << "rotationAxis" << rotationAxis;
 
 	ofVec3f axis(rotationAxis.at<double>(0), rotationAxis.at<double>(1), rotationAxis.at<double>(2));
 	ofVec3f euler = ofQuaternion(rotationAngleDegrees, axis).getEuler();
-	Mat eulerMat = (Mat_<double>(3, 1) << euler.x, euler.y, euler.z);
+	cv::Mat eulerMat = (cv::Mat_<double>(3, 1) << euler.x, euler.y, euler.z);
 	fs << "euler" << eulerMat;
 
 	if (fileNameSummary == "") {

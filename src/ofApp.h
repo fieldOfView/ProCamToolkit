@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ofMain.h"
-#include "ofxCv.h"
 #include "ofxAssimpModelLoader.h"
 #include "ofxAutoControlPanel.h"
 #include "MeshUtils.h"

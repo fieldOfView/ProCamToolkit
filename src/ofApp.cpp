@@ -1,9 +1,5 @@
 #include "ofApp.h"
 
-
-using namespace ofxCv;
-using namespace cv;
-
 void ofApp::setb(string name, bool value) {
 	panel.setValueB(name, value);
 }
@@ -117,7 +113,7 @@ void ofApp::draw() {
 
 	if(message != "") {
 		ofPushStyle();
-		ofSetColor(magentaPrint);
+		ofSetColor(ofColor::magenta);
 		ofSetLineWidth(8);
 		ofLine(0, 0, ofGetWidth(), ofGetHeight());
 		ofLine(ofGetWidth(), 0, 0, ofGetHeight());

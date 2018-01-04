@@ -1,7 +1,5 @@
 #include "ReferencePoints.h"
 
-using namespace ofxCv;
-using namespace cv;
 
 ReferencePoints::ReferencePoints() {
 	referenceMeshPoints.setAutoMark(false);
@@ -114,7 +112,7 @@ void ReferencePoints::setState(bool select) {
 				else {
 					newPoint = ofVec2f(ofGetMouseX(), ofGetMouseY());
 				}
-				objectPoints.push_back(toCv(referenceMesh.getVertex(selectedPoint)));
+				objectPoints.push_back(ofxCv::toCv(referenceMesh.getVertex(selectedPoint)));
 				placedPoints.add(newPoint);
 
 				unsigned int newPlacedPointIndex = placedPoints.size() - 1;
@@ -173,9 +171,9 @@ void ReferencePoints::removeSelected() {
 void ReferencePoints::calibrate(int flags) {
 	if (placedPoints.pointsChanged) {
 		placedPoints.pointsChanged = false;
-		vector<Point2f> imagePoints;
+		vector<cv::Point2f> imagePoints;
 		for (std::vector<int>::size_type i = 0; i != placedPoints.size(); i++) {
-			imagePoints.push_back(toCv(placedPoints.get(i).position));
+			imagePoints.push_back(ofxCv::toCv(placedPoints.get(i).position));
 		}
 
 		mapamok.calibrate(ofGetWidth(), ofGetHeight(), imagePoints, objectPoints, flags, 80);
@@ -183,14 +181,14 @@ void ReferencePoints::calibrate(int flags) {
 }
 
 void ReferencePoints::load(string fileName) {
-	FileStorage fs(ofToDataPath(fileName, true), FileStorage::READ);
+	cv::FileStorage fs(ofToDataPath(fileName, true), cv::FileStorage::READ);
 	if (!fs.isOpened()) {
 		ofLogError() << "could not open pointdata file for reading";
 		return;
 	}
 
 	vector<int> pointIndicesSigned;
-	vector<Point2f> imagePoints;
+	vector<cv::Point2f> imagePoints;
 
 	fs["objectPoints"] >> objectPoints;
 	fs["imagePoints"] >> imagePoints;
@@ -199,7 +197,7 @@ void ReferencePoints::load(string fileName) {
 
 	placedPoints.clear();
 	for (std::vector<int>::size_type i = 0; i != imagePoints.size(); i++) {
-		placedPoints.add(toOf(imagePoints[i]));
+		placedPoints.add(ofxCv::toOf(imagePoints[i]));
 	}
 	referenceMeshPoints.deselectAll(false);
 	for (auto const& index : pointIndices) {
@@ -210,15 +208,15 @@ void ReferencePoints::load(string fileName) {
 }
 
 void ReferencePoints::save(string fileName) {
-	FileStorage fs(ofToDataPath(fileName), FileStorage::WRITE);
+	cv::FileStorage fs(ofToDataPath(fileName), cv::FileStorage::WRITE);
 	if (!fs.isOpened()) {
 		ofLogError() << "could not open pointdata file for writing";
 		return;
 	}
 
-	vector<Point2f> imagePoints;
+	vector<cv::Point2f> imagePoints;
 	for (std::vector<int>::size_type i = 0; i != placedPoints.size(); i++) {
-		imagePoints.push_back(toCv(placedPoints.get(i).position));
+		imagePoints.push_back(ofxCv::toCv(placedPoints.get(i).position));
 	}
 
 	fs << "objectPoints" << objectPoints;

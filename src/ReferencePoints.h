@@ -5,7 +5,6 @@
 
 #include "DraggablePoints.h"
 #include "SelectablePoints.h"
-#include "ofxCv.h"
 #include "Mapamok.h"
 #include "MeshUtils.h"
 
