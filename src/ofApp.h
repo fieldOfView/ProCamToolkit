@@ -3,7 +3,6 @@
 #include "ofMain.h"
 #include "ofxAssimpModelLoader.h"
 #include "ofxAutoControlPanel.h"
-#include "MeshUtils.h"
 #include "ofxMapamokCalibration.h"
 #include "LineArt.h"
 #include "AutoShader.h"

@@ -63,21 +63,3 @@ void project(ofMesh& mesh, const ofCamera& camera, ofRectangle viewport) {
 		cur.z = CameraXYZ.z / 2;
 	}
 }
-
-
-vector<ofMesh> getMeshes(ofxAssimpModelLoader& model) {
-	vector<ofMesh> meshes;
-	for (int i = 0; i < model.getNumMeshes(); i++) {
-		meshes.push_back(model.getMesh(i));
-	}
-	return meshes;
-}
-
-ofMesh joinMeshes(vector<ofMesh>& meshes) {
-	ofMesh mesh;
-	for (int i = 0; i < meshes.size(); i++) {
-		mesh.append(meshes[i]);
-	}
-	return mesh;
-}
-

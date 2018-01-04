@@ -140,11 +140,12 @@ void ofApp::setupMesh(string fileName) {
 	if (meshFile.exists()) {
 		ofxAssimpModelLoader model;
 		model.loadModel(fileName);
-		vector<ofMesh> meshes = getMeshes(model);
 
 		// join all the meshes
 		objectMesh = ofVboMesh();
-		objectMesh = joinMeshes(meshes);
+		for (int i = 0; i < model.getNumMeshes(); i++) {
+			objectMesh.append(model.getMesh(i));
+		}
 	}
 	
 	referencePoints.setup(objectMesh);
