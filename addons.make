@@ -1,5 +1,4 @@
 ofxAssimpModelLoader
 ofxControlPanel
-ofxCv
 ofxOpenCv
 ofxXmlSettings

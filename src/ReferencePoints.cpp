@@ -112,7 +112,7 @@ void ReferencePoints::setState(bool select) {
 				else {
 					newPoint = ofVec2f(ofGetMouseX(), ofGetMouseY());
 				}
-				objectPoints.push_back(ofxCv::toCv(referenceMesh.getVertex(selectedPoint)));
+				objectPoints.push_back(toCv(referenceMesh.getVertex(selectedPoint)));
 				placedPoints.add(newPoint);
 
 				unsigned int newPlacedPointIndex = placedPoints.size() - 1;
@@ -173,7 +173,7 @@ void ReferencePoints::calibrate(int flags) {
 		placedPoints.pointsChanged = false;
 		vector<cv::Point2f> imagePoints;
 		for (std::vector<int>::size_type i = 0; i != placedPoints.size(); i++) {
-			imagePoints.push_back(ofxCv::toCv(placedPoints.get(i).position));
+			imagePoints.push_back(toCv(placedPoints.get(i).position));
 		}
 
 		mapamok.calibrate(ofGetWidth(), ofGetHeight(), imagePoints, objectPoints, flags, 80);
@@ -197,7 +197,7 @@ void ReferencePoints::load(string fileName) {
 
 	placedPoints.clear();
 	for (std::vector<int>::size_type i = 0; i != imagePoints.size(); i++) {
-		placedPoints.add(ofxCv::toOf(imagePoints[i]));
+		placedPoints.add(toOf(imagePoints[i]));
 	}
 	referenceMeshPoints.deselectAll(false);
 	for (auto const& index : pointIndices) {
@@ -216,7 +216,7 @@ void ReferencePoints::save(string fileName) {
 
 	vector<cv::Point2f> imagePoints;
 	for (std::vector<int>::size_type i = 0; i != placedPoints.size(); i++) {
-		imagePoints.push_back(ofxCv::toCv(placedPoints.get(i).position));
+		imagePoints.push_back(toCv(placedPoints.get(i).position));
 	}
 
 	fs << "objectPoints" << objectPoints;
@@ -231,3 +231,20 @@ void ReferencePoints::reset() {
 	pointIndices.clear();
 	dataChanged = true;
 }
+
+cv::Point2f ReferencePoints::toCv(ofVec2f vec) {
+	return cv::Point2f(vec.x, vec.y);
+}
+
+cv::Point3f ReferencePoints::toCv(ofVec3f vec) {
+	return cv::Point3f(vec.x, vec.y, vec.z);
+}
+
+ofVec2f ReferencePoints::toOf(cv::Point2f point) {
+	return ofVec2f(point.x, point.y);
+}
+
+ofVec3f ReferencePoints::toOf(cv::Point3f point) {
+	return ofVec3f(point.x, point.y, point.z);
+}
+

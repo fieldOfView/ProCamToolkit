@@ -26,7 +26,7 @@ void Mapamok::calibrate(int width, int height, vector<cv::Point2f>& imagePoints,
 	rvec = rvecs[0];
 	tvec = tvecs[0];
 	intrinsics.setup(cameraMatrix, imageSize);
-	modelMatrix = ofxCv::makeMatrix(rvec, tvec);
+	modelMatrix = makeMatrix(rvec, tvec);
 	calibrationReady = true;
 }
 
@@ -92,14 +92,13 @@ void Mapamok::load(string fileName) {
 
 	if (imageSize.width != 0 && imageSize.height != 0) {
 		intrinsics.setup(cameraMatrix, imageSize);
-		modelMatrix = ofxCv::makeMatrix(rvec, tvec);
+		modelMatrix = makeMatrix(rvec, tvec);
 
 		calibrationReady = true;
 	}
 	else {
 		ofLogError() << "calibration does not contain image size";
 	}
-
 }
 
 void Mapamok::save(string fileName, string fileNameSummary) {
@@ -186,4 +185,20 @@ void Mapamok::save(string fileName, string fileNameSummary) {
 
 void Mapamok::reset() {
 	calibrationReady = false;
+}
+
+ofMatrix4x4 Mapamok::makeMatrix(cv::Mat rotation, cv::Mat translation) {
+	cv::Mat rot3x3;
+	if (rotation.rows == 3 && rotation.cols == 3) {
+		rot3x3 = rotation;
+	}
+	else {
+		Rodrigues(rotation, rot3x3);
+	}
+	double* rm = rot3x3.ptr<double>(0);
+	double* tm = translation.ptr<double>(0);
+	return ofMatrix4x4(rm[0], rm[3], rm[6], 0.0f,
+		rm[1], rm[4], rm[7], 0.0f,
+		rm[2], rm[5], rm[8], 0.0f,
+		tm[0], tm[1], tm[2], 1.0f);
 }

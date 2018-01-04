@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ofMain.h"
-#include "ofxCv.h"
+#include "ofxOpenCv.h"
 
 #include "DraggablePoints.h"
 #include "SelectablePoints.h"
@@ -33,6 +33,11 @@ public:
 	Mapamok mapamok;
 
 private:
+	cv::Point2f toCv(ofVec2f vec);
+	cv::Point3f toCv(ofVec3f vec);
+	ofVec2f toOf(cv::Point2f point);
+	ofVec3f toOf(cv::Point3f point);
+
 	ofVboMesh referenceMesh;
 	SelectablePoints referenceMeshPoints;
 

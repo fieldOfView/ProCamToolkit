@@ -1,7 +1,8 @@
 #pragma once
 
 #include "ofMain.h"
-#include "ofxCv.h"
+#include "ofxOpenCv.h"
+#include "Intrinsics.h"
 
 class Mapamok {
 public:
@@ -21,7 +22,9 @@ public:
 	void reset();
 
 private:
+	ofMatrix4x4 makeMatrix(cv::Mat rotation, cv::Mat translation);
+
 	cv::Mat rvec, tvec;
 	ofMatrix4x4 modelMatrix;
-	ofxCv::Intrinsics intrinsics;
+	Intrinsics intrinsics;
 };
