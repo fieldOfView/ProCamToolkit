@@ -8,7 +8,6 @@ void ofxMapamok::calibrate(int width, int height, vector<cv::Point2f>& imagePoin
 		return;
 	}
 	vector<cv::Mat> rvecs, tvecs;
-	cv::Mat distCoeffs;
 	vector<vector<cv::Point3f> > objectPointsCv;
 	vector<vector<cv::Point2f> > imagePointsCv;
 	objectPointsCv.push_back(objectPoints);
@@ -21,16 +20,18 @@ void ofxMapamok::calibrate(int width, int height, vector<cv::Point2f>& imagePoin
 		f, 0, c.x,
 		0, f, c.y,
 		0, 0, 1);
+	cv::Mat distortionCoefficients;
 
-	calibrateCamera(objectPointsCv, imagePointsCv, imageSize, cameraMatrix, distCoeffs, rvecs, tvecs, flags);
-	setData(cameraMatrix, rvecs[0], tvecs[0], imageSize);
+	calibrateCamera(objectPointsCv, imagePointsCv, imageSize, cameraMatrix, distortionCoefficients, rvecs, tvecs, flags);
+	setData(cameraMatrix, rvecs[0], tvecs[0], imageSize, distortionCoefficients);
 }
 
-void ofxMapamok::setData(cv::Mat1d cameraMatrix, cv::Mat rotation, cv::Mat translation, cv::Size2i imageSize) {
+void ofxMapamok::setData(cv::Mat1d cameraMatrix, cv::Mat rotation, cv::Mat translation, cv::Size2i imageSize, cv::Mat distortionCoefficients) {
 	rvec = rotation;
 	tvec = translation;
 	intrinsics.setup(cameraMatrix, imageSize);
 	modelMatrix = makeMatrix(rvec, tvec);
+	distCoeffs = distortionCoefficients;
 
 	calibrationReady = true;
 }
@@ -90,14 +91,16 @@ void ofxMapamok::load(string fileName) {
 	cv::Mat cameraMatrix;
 	cv::Size2i imageSize;
 	cv::Mat rotation, translation;
+	cv::Mat distortionCoefficients;
 	fs["cameraMatrix"] >> cameraMatrix;
 	fs["imageSize"][0] >> imageSize.width;
 	fs["imageSize"][1] >> imageSize.height;
 	fs["rotationVector"] >> rotation;
 	fs["translationVector"] >> translation;
+	fs["distCoeffs"] >> distortionCoefficients;
 
 	if (imageSize.width != 0 && imageSize.height != 0) {
-		setData(cameraMatrix, rotation, translation, imageSize);
+		setData(cameraMatrix, rotation, translation, imageSize, distortionCoefficients);
 	}
 	else {
 		ofLogError() << "calibration does not contain image size";
@@ -124,6 +127,7 @@ void ofxMapamok::save(string fileName, string fileNameSummary) {
 
 	cv::Point2d fov = intrinsics.getFov();
 	fs << "fov" << fov;
+	fs << "distCoeffs" << distCoeffs;
 
 	cv::Point2d principalPoint = intrinsics.getPrincipalPoint();
 	fs << "principalPoint" << principalPoint;
@@ -184,10 +188,20 @@ void ofxMapamok::save(string fileName, string fileNameSummary) {
 	basic << "image size (in pixels):" << endl;
 	basic << "\tx: " << ofToString(imageSize.width, 2) << endl;
 	basic << "\ty: " << ofToString(imageSize.height, 2) << endl;
+	basic << "distortion coefficients:" << endl;
+	basic << "\tradial: " << ofToString(distCoeffs.at<double>(0), 4) << " " << ofToString(distCoeffs.at<double>(1), 4) << " " << ofToString(distCoeffs.at<double>(4), 4) << endl;
+	basic << "\ttangential: " << ofToString(distCoeffs.at<double>(2), 4) << " " << ofToString(distCoeffs.at<double>(3), 4) << endl;
 }
 
 void ofxMapamok::reset() {
 	calibrationReady = false;
+
+	rvec = cv::Mat();
+	tvec = cv::Mat();
+	modelMatrix = ofMatrix4x4();
+	intrinsics = Intrinsics();
+	distCoeffs = cv::Mat();
+
 }
 
 ofMatrix4x4 ofxMapamok::makeMatrix(cv::Mat rotation, cv::Mat translation) {
