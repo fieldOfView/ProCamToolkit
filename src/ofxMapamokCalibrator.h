@@ -48,7 +48,8 @@ private:
 	vector<cv::Point3f> objectPoints;
 
 	const float selectionMergeTolerance = .01;
-	bool dataChanged = false;
 
+	bool dataChanged = false;
+	int lastFlags;
 	ofMatrix4x4 lastModelViewProjectionMatrix;
 };

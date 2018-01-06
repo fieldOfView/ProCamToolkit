@@ -204,7 +204,9 @@ void ofxMapamokCalibrator::removeSelected() {
 }
 
 void ofxMapamokCalibrator::calibrate(int flags) {
-	if (placedPoints.pointsChanged) {
+	if (placedPoints.pointsChanged || flags != lastFlags) {
+		lastFlags = flags;
+
 		placedPoints.pointsChanged = false;
 		vector<cv::Point2f> imagePoints;
 		for (std::vector<int>::size_type i = 0; i != placedPoints.size(); i++) {
