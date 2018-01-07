@@ -48,18 +48,22 @@ void ofxMapamokCalibrator::update() {
 
 	if (selectPoints) {
 		ofMatrix4x4 modelViewProjectionMatrix = camera.getModelViewProjectionMatrix();
-		if (!modelViewProjectionMatrix.getRowAsVec4f(0).match(lastModelViewProjectionMatrix.getRowAsVec4f(0)) ||
+		if (viewportChanged ||
+			!modelViewProjectionMatrix.getRowAsVec4f(0).match(lastModelViewProjectionMatrix.getRowAsVec4f(0)) ||
 			!modelViewProjectionMatrix.getRowAsVec4f(1).match(lastModelViewProjectionMatrix.getRowAsVec4f(1)) ||
 			!modelViewProjectionMatrix.getRowAsVec4f(2).match(lastModelViewProjectionMatrix.getRowAsVec4f(2)) ||
 			!modelViewProjectionMatrix.getRowAsVec4f(3).match(lastModelViewProjectionMatrix.getRowAsVec4f(3))) {
 
 			lastModelViewProjectionMatrix = modelViewProjectionMatrix;
+			viewportChanged = false;
 
 			ofMesh imageMesh = ofVboMesh(referenceMesh);
-			project(imageMesh, camera, ofGetCurrentViewport());
+			ofRectangle windowRect(0, 0, ofGetWidth(), ofGetHeight());
+			ofPoint offset = viewport.getCenter() - windowRect.getCenter();
+			project(imageMesh, camera, windowRect);
 			vector<ofPoint> imageMeshPoints = imageMesh.getVertices();
 			for (std::vector<int>::size_type index = 0; index != imageMeshPoints.size(); index++) {
-				referenceMeshPoints.get(index).position = ofVec2f(imageMeshPoints[index].x, imageMeshPoints[index].y);
+				referenceMeshPoints.get(index).position = ofVec2f(imageMeshPoints[index].x, imageMeshPoints[index].y) + offset;
 			}
 		}
 	}
@@ -73,9 +77,14 @@ void ofxMapamokCalibrator::draw() {
 	ofColor transparentBlack(0, 0, 0, 0);
 
 	if (selectPoints) {
+		ofRectangle restoreViewport = ofGetCurrentViewport();
+		ofViewport(viewport);
 		camera.begin();
+
 		drawHiddenLine(displayMesh);
+		
 		camera.end();
+		ofViewport(restoreViewport);
 
 		referenceMeshPoints.draw(ofEventArgs());
 	} else {
@@ -213,7 +222,15 @@ void ofxMapamokCalibrator::calibrate(int flags) {
 			imagePoints.push_back(toCv(placedPoints.get(i).position));
 		}
 
-		mapamok.calibrate(ofGetWidth(), ofGetHeight(), imagePoints, objectPoints, flags, 80);
+		mapamok.calibrate(ofGetCurrentViewport().width, ofGetCurrentViewport().height, imagePoints, objectPoints, flags, 80);
+	}
+}
+
+void ofxMapamokCalibrator::setViewport(ofRectangle vp) {
+	if (vp != viewport) {
+		viewport = vp;
+		mapamok.setViewport(viewport);
+		viewportChanged = true;
 	}
 }
 

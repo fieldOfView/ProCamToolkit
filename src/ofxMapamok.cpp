@@ -36,6 +36,13 @@ void ofxMapamok::setData(cv::Mat1d cameraMatrix, cv::Mat rotation, cv::Mat trans
 	calibrationReady = true;
 }
 
+void ofxMapamok::setViewport(ofRectangle vp) {
+	if (vp != viewport) {
+		viewport = vp;
+	}
+}
+
+
 void ofxMapamok::begin() {
 	if (!calibrationReady) {
 		return;
@@ -46,12 +53,18 @@ void ofxMapamok::begin() {
 	ofSetMatrixMode(OF_MATRIX_MODELVIEW);
 	intrinsics.loadProjectionMatrix(nearDist, farDist);
 	ofMultMatrix(modelMatrix);
+
+	restoreViewport = ofGetCurrentViewport();
+	ofViewport(viewport);
 }
 
 void ofxMapamok::end() {
 	if (!calibrationReady) {
 		return;
 	}
+
+	ofViewport(restoreViewport);
+
 	ofPopMatrix();
 	ofSetMatrixMode(OF_MATRIX_PROJECTION);
 	ofPopMatrix();

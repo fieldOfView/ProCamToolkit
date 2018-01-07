@@ -72,14 +72,36 @@ void ofApp::update() {
 	}
 	light.setPosition(getf("lightX"), getf("lightY"), getf("lightZ"));
 
+	int viewports = geti("viewports");
+	int viewportWidth = ofGetWidth() / viewports;
+	int viewportHeight = ofGetHeight();
+	int currentViewport = min(geti("activeViewport"), viewports) - 1;
+
+	calibrator.setViewport(ofRectangle(currentViewport*viewportWidth, 0, viewportWidth, viewportHeight));
 	calibrator.update();
 }
 
 void ofApp::draw() {
 	string message = "";
 
+	int viewports = geti("viewports");
+
+	int i = 0;
 	if (objectMesh.getNumIndices() > 0) {
 		if (getb("setupMode")) {
+			if (viewports > 1) {
+				int viewportWidth = ofGetWidth() / viewports;
+				int viewportHeight = ofGetHeight();
+				int currentViewport = min(geti("activeViewport"), viewports) - 1;
+				ofRectangle viewport(currentViewport*viewportWidth, 0, viewportWidth, viewportHeight);
+
+				ofNoFill();
+				ofSetColor(ofColor::magenta);
+				ofDrawRectangle(viewport);
+				ofFill();
+				ofSetColor(ofColor::white);
+			}
+
 			calibrator.draw();
 		} else {
 			if (calibrator.mapamok.calibrationReady) {
@@ -254,10 +276,13 @@ void ofApp::setupControlPanel() {
 	panel.setup();
 	panel.msg = "tab hides the panel, space toggles render/selection mode, 'f' toggles fullscreen.";
 
-	panel.addPanel("Interaction");
+	panel.addPanel("Main");
 	panel.addToggle("setupMode", true);
 	panel.addToggle("selectionMode", true);
-	panel.addLabel("");
+
+	panel.addSlider("viewports", 1, 1, 3, true);
+	panel.addSlider("activeViewport", 1, 1, 3, true);
+
 	panel.addToggle("loadCalibration", false);
 	panel.addToggle("saveCalibration", false);
 	panel.addToggle("resetCalibration", false);

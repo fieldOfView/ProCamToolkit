@@ -21,6 +21,7 @@ public:
 	void removeSelected();
 
 	void calibrate(int flags);
+	void setViewport(ofRectangle vp);
 
 	void load(string fileName);
 	void save(string fileName);
@@ -42,6 +43,9 @@ private:
 	ofVboMesh displayMesh;
 	ofVboMesh referenceMesh;
 	SelectablePoints referenceMeshPoints;
+
+	ofRectangle viewport;
+	bool viewportChanged;
 
 	DraggablePoints placedPoints;
 	vector<unsigned int> pointIndices;

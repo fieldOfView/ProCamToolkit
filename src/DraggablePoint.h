@@ -49,8 +49,9 @@ public:
 			ofCircle(position, sizes[SIZE_SELECTED_CIRCLE_RADIUS]);
 			ofSetLineWidth(1);
 			ofSetColor(colors[COLOR_CROSSHAIR]);
-			ofLine(position.x, 0, position.x, ofGetHeight());
-			ofLine(0, position.y, ofGetWidth(), position.y);
+			ofRectangle viewport = ofGetCurrentViewport();
+			ofLine(position.x, 0, position.x, viewport.height);
+			ofLine(0, position.y, viewport.width, position.y);
 		}
 		ofPopStyle();
 		ofPushStyle();
