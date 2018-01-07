@@ -150,7 +150,7 @@ void ofxMapamokCalibrator::setState(bool select) {
 				ofVec2f newPoint;
 				if (mapamok.calibrationReady) {
 					ofVec3f imagePoint = referenceMesh.getVertex(selectedPoint);
-					imagePoint = mapamok.worldToScreen(imagePoint);
+					imagePoint = mapamok.worldToScreen(imagePoint, viewport);
 					newPoint = ofVec2f(imagePoint);
 				}
 				else {
@@ -222,15 +222,21 @@ void ofxMapamokCalibrator::calibrate(int flags) {
 			imagePoints.push_back(toCv(placedPoints.get(i).position));
 		}
 
-		mapamok.calibrate(ofGetCurrentViewport().width, ofGetCurrentViewport().height, imagePoints, objectPoints, flags, 80);
+		mapamok.calibrate(viewport, imagePoints, objectPoints, flags, 80);
 	}
 }
 
 void ofxMapamokCalibrator::setViewport(ofRectangle vp) {
 	if (vp != viewport) {
+		for (std::vector<int>::size_type i = 0; i != placedPoints.size(); i++) {
+			// scale/translate all placed points from old viewport (viewport) to new viewport (vp)
+			placedPoints.get(i).position = ((placedPoints.get(i).position - viewport.getTopLeft()) / (viewport.getBottomRight() - viewport.getTopLeft())) * (vp.getBottomRight() - vp.getTopLeft()) + vp.getTopLeft();
+		}
+
 		viewport = vp;
 		mapamok.setViewport(viewport);
 		viewportChanged = true;
+		placedPoints.pointsChanged = true;
 	}
 }
 

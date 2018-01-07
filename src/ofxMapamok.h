@@ -10,7 +10,7 @@ public:
 	float nearDist = 10;
 	float farDist = 2000;
 
-	void calibrate(int width, int height, vector<cv::Point2f>& imagePoints, vector<cv::Point3f>& objectPoints, int flags, float aov = 80);
+	void calibrate(ofRectangle vp, vector<cv::Point2f>& imagePoints, vector<cv::Point3f>& objectPoints, int flags, float aov = 80);
 	void setData(cv::Mat1d, cv::Mat rvec, cv::Mat tvec, cv::Size2i imageSize, cv::Mat distortionCoefficients);
 	void setViewport(ofRectangle vp);
 
@@ -31,5 +31,4 @@ private:
 	Intrinsics intrinsics;
 	cv::Mat distCoeffs;
 	ofRectangle viewport;
-	ofRectangle restoreViewport;
 };

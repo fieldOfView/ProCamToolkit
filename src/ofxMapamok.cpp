@@ -1,19 +1,29 @@
 #include "ofxMapamok.h"
 
-void ofxMapamok::calibrate(int width, int height, vector<cv::Point2f>& imagePoints, vector<cv::Point3f>& objectPoints, int flags, float aov) {
+void ofxMapamok::calibrate(ofRectangle vp, vector<cv::Point2f>& imagePoints, vector<cv::Point3f>& objectPoints, int flags, float aov) {
 	int n = imagePoints.size();
 	const static int minPoints = 6;
 	if (n < minPoints) {
 		calibrationReady = false;
 		return;
 	}
+
 	vector<cv::Mat> rvecs, tvecs;
 	vector<vector<cv::Point3f> > objectPointsCv;
 	vector<vector<cv::Point2f> > imagePointsCv;
+	cv::Point2f offset(vp.x, vp.y);
+	if (offset == cv::Point2f(0, 0)) {
+		imagePointsCv.push_back(imagePoints);
+	} else {
+		vector<cv::Point2f> offsetPoints;
+		for (auto const& point : imagePoints) {
+			offsetPoints.push_back(point - offset);
+		}
+		imagePointsCv.push_back(offsetPoints);
+	}
 	objectPointsCv.push_back(objectPoints);
-	imagePointsCv.push_back(imagePoints);
 
-	cv::Size2i imageSize(width, height);
+	cv::Size2i imageSize(vp.width, vp.height);
 	float f = imageSize.width * ofDegToRad(aov); // this might be wrong, but it's optimized out
 	cv::Point2f c = cv::Point2f(imageSize) * (1. / 2);
 	cv::Mat1d cameraMatrix = (cv::Mat1d(3, 3) <<
@@ -54,7 +64,6 @@ void ofxMapamok::begin() {
 	intrinsics.loadProjectionMatrix(nearDist, farDist);
 	ofMultMatrix(modelMatrix);
 
-	restoreViewport = ofGetCurrentViewport();
 	ofViewport(viewport);
 }
 
@@ -63,7 +72,8 @@ void ofxMapamok::end() {
 		return;
 	}
 
-	ofViewport(restoreViewport);
+	// restore default viewport
+	ofViewport(0, 0, ofGetWidth(), ofGetHeight());
 
 	ofPopMatrix();
 	ofSetMatrixMode(OF_MATRIX_PROJECTION);
