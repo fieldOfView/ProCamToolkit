@@ -22,6 +22,7 @@ public:
 	}
 
 	bool pointsChanged;
+	ofRectangle viewport;
 
 	unsigned int size() {
 		return points.size();
@@ -100,7 +101,11 @@ public:
 		bool shift = ofGetKeyPressed(OF_KEY_SHIFT) && allowMultiSelect;
 		int nearestPointIndex = -1;
 		float nearestPointDistanceSquared;
+		bool limitToViewport = (viewport != ofRectangle());
 		for(int i = 0; i < size(); i++) {
+			if (limitToViewport && !viewport.inside(points[i].position)) {
+				continue;
+			}
 			bool hit = points[i].isHit(mouse);
 			if(hit) {
 				float distanceSquared = points[i].position.distanceSquared(mouse);
@@ -132,7 +137,11 @@ public:
 	}
 	void draw(ofEventArgs& args) {
 		ofPushStyle();
-		for(int i = 0; i < size(); i++) {
+		bool limitToViewport = (viewport != ofRectangle());
+		for (int i = 0; i < size(); i++) {
+			if (limitToViewport && !viewport.inside(points[i].position)) {
+				continue;
+			}
 			points[i].draw();
 		}
 		ofPopStyle();

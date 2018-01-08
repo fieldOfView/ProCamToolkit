@@ -232,11 +232,13 @@ void ofxMapamokCalibrator::setViewport(ofRectangle vp) {
 			// scale/translate all placed points from old viewport (viewport) to new viewport (vp)
 			placedPoints.get(i).position = ((placedPoints.get(i).position - viewport.getTopLeft()) / (viewport.getBottomRight() - viewport.getTopLeft())) * (vp.getBottomRight() - vp.getTopLeft()) + vp.getTopLeft();
 		}
+		placedPoints.pointsChanged = true;
+		placedPoints.viewport = vp;
+		referenceMeshPoints.viewport = vp;
 
 		viewport = vp;
 		mapamok.setViewport(viewport);
 		viewportChanged = true;
-		placedPoints.pointsChanged = true;
 	}
 }
 
