@@ -57,10 +57,12 @@ void ofxMapamokCalibrator::update() {
 			lastModelViewProjectionMatrix = modelViewProjectionMatrix;
 			viewportChanged = false;
 
-			ofMesh imageMesh = ofVboMesh(referenceMesh);
 			ofRectangle windowRect(0, 0, ofGetWidth(), ofGetHeight());
 			ofPoint offset = viewport.getCenter() - windowRect.getCenter();
-			project(imageMesh, camera, windowRect);
+			ofRectangle projectRect(0, (windowRect.height - viewport.height) / 2, windowRect.width, viewport.height);
+
+			ofMesh imageMesh = ofVboMesh(referenceMesh);
+			project(imageMesh, camera, projectRect);
 			vector<ofPoint> imageMeshPoints = imageMesh.getVertices();
 			for (std::vector<int>::size_type index = 0; index != imageMeshPoints.size(); index++) {
 				referenceMeshPoints.get(index).position = ofVec2f(imageMeshPoints[index].x, imageMeshPoints[index].y) + offset;

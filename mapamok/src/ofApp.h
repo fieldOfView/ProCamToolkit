@@ -9,13 +9,6 @@
 
 class ofApp : public ofBaseApp {
 public:
-	void setb(string name, bool value);
-	void seti(string name, int value);
-	void setf(string name, float value);
-	bool getb(string name);
-	int geti(string name);
-	float getf(string name);
-
 	void setup();
 	void update();
 	void draw();
@@ -39,4 +32,13 @@ public:
 
 private:
 	ofxMapamokCalibrator calibrator;
+
+	void setb(string name, bool value);
+	void seti(string name, int value);
+	void setf(string name, float value);
+	bool getb(string name);
+	int geti(string name);
+	float getf(string name);
+
+	ofRectangle makeViewport();
 };

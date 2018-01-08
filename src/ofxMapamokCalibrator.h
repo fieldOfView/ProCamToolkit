@@ -32,6 +32,7 @@ public:
 
 	ofEasyCam camera;
 	ofxMapamok mapamok;
+	ofRectangle viewport;
 
 private:
 	void drawHiddenLine(ofMesh mesh);
@@ -44,7 +45,6 @@ private:
 	ofVboMesh referenceMesh;
 	SelectablePoints referenceMeshPoints;
 
-	ofRectangle viewport;
 	bool viewportChanged;
 
 	DraggablePoints placedPoints;

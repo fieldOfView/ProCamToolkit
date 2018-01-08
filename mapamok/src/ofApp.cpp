@@ -72,12 +72,7 @@ void ofApp::update() {
 	}
 	light.setPosition(getf("lightX"), getf("lightY"), getf("lightZ"));
 
-	int viewports = geti("viewports");
-	int viewportWidth = ofGetWidth() / viewports;
-	int viewportHeight = ofGetHeight();
-	int currentViewport = min(geti("activeViewport"), viewports) - 1;
-
-	calibrator.setViewport(ofRectangle(currentViewport*viewportWidth, 0, viewportWidth, viewportHeight));
+	calibrator.setViewport(makeViewport());
 	calibrator.update();
 }
 
@@ -90,14 +85,9 @@ void ofApp::draw() {
 	if (objectMesh.getNumIndices() > 0) {
 		if (getb("setupMode")) {
 			if (viewports > 1) {
-				int viewportWidth = ofGetWidth() / viewports;
-				int viewportHeight = ofGetHeight();
-				int currentViewport = min(geti("activeViewport"), viewports) - 1;
-				ofRectangle viewport(currentViewport*viewportWidth, 0, viewportWidth, viewportHeight);
-
 				ofNoFill();
 				ofSetColor(ofColor::magenta);
-				ofDrawRectangle(viewport);
+				ofDrawRectangle(calibrator.viewport);
 				ofFill();
 				ofSetColor(ofColor::white);
 			}
@@ -280,8 +270,8 @@ void ofApp::setupControlPanel() {
 	panel.addToggle("setupMode", true);
 	panel.addToggle("selectionMode", true);
 
-	panel.addSlider("viewports", 1, 1, 3, true);
-	panel.addSlider("activeViewport", 1, 1, 3, true);
+	panel.addSlider("viewports", 1, 1, 4, true);
+	panel.addSlider("activeViewport", 1, 1, 4, true);
 
 	panel.addToggle("loadCalibration", false);
 	panel.addToggle("saveCalibration", false);
@@ -306,3 +296,23 @@ void ofApp::setupControlPanel() {
 	panel.addToggle("CV_CALIB_FIX_PRINCIPAL_POINT", false);
 }
 
+ofRectangle ofApp::makeViewport()
+{
+	ofRectangle viewport;
+
+	int viewports = geti("viewports");
+	int currentViewport = min(geti("activeViewport"), viewports) - 1;
+
+	if (viewports < 4) {
+		int viewportWidth = ofGetWidth() / viewports;
+		int viewportHeight = ofGetHeight();
+		return ofRectangle(currentViewport * viewportWidth, 0, viewportWidth, viewportHeight);
+	} else {
+		int rows = sqrt(viewports);
+		int columns = ceil((double)viewports / rows);
+		int viewportWidth = ofGetWidth() / columns;
+		int viewportHeight = ofGetHeight() / rows;
+
+		return ofRectangle((currentViewport % columns) * viewportWidth, (currentViewport / columns) * viewportHeight, viewportWidth, viewportHeight);
+	}
+}
