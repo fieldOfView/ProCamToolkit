@@ -142,7 +142,7 @@ public:
 			if (limitToViewport && !viewport.inside(points[i].position)) {
 				continue;
 			}
-			points[i].draw();
+			points[i].draw(viewport);
 		}
 		ofPopStyle();
 	}

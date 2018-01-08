@@ -40,18 +40,21 @@ public:
 		sizes = _sizes;
 		colors = _colors;
 	}
-	void draw() {
+	void draw(ofRectangle viewport = ofRectangle()) {
+		if (viewport == ofRectangle()) {
+			viewport = ofGetCurrentViewport();
+		}
 		ofPushStyle();
 		ofNoFill();
 		if(selected) {
 			ofSetColor(colors[COLOR_SELECTED]);
 			ofSetLineWidth(sizes[SIZE_SELECTED_CIRCLE_THICKNESS]);
 			ofCircle(position, sizes[SIZE_SELECTED_CIRCLE_RADIUS]);
+
 			ofSetLineWidth(1);
 			ofSetColor(colors[COLOR_CROSSHAIR]);
-			ofRectangle viewport = ofGetCurrentViewport();
-			ofLine(position.x, 0, position.x, viewport.height);
-			ofLine(0, position.y, viewport.width, position.y);
+			ofLine(position.x, viewport.getTop(), position.x, viewport.getBottom());
+			ofLine(viewport.getLeft(), position.y, viewport.getRight(), position.y);
 		}
 		ofPopStyle();
 		ofPushStyle();
