@@ -70,7 +70,7 @@ void Intrinsics::loadProjectionMatrix(float nearDist, float farDist, cv::Point2d
 	float fx = cameraMatrix.at<double>(0, 0);
 	float fy = cameraMatrix.at<double>(1, 1);
 	float cx = principalPoint.x;
-	float cy = principalPoint.y;
+	float cy = principalPoint.y * aspectRatio;
 
 	ofMatrix4x4 frustum;
 	frustum.makeFrustumMatrix(
