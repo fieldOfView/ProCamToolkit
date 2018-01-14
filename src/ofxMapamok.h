@@ -18,7 +18,7 @@ public:
 	void end();
 
 	ofVec3f worldToScreen(ofVec3f WorldXYZ, ofRectangle viewport = ofRectangle());
-	
+
 	void load(string fileName);
 	void save(string fileName, string fileNameSummary = "");
 	void reset();
@@ -30,5 +30,10 @@ private:
 	ofMatrix4x4 modelMatrix;
 	Intrinsics intrinsics;
 	cv::Mat distCoeffs;
+
 	ofRectangle viewport;
+
+	bool useDistortionShader;
+	ofShader distortionShader;
+	ofFbo distortionBuffer;
 };

@@ -43,6 +43,18 @@ void ofxMapamok::setData(cv::Mat1d cameraMatrix, cv::Mat rotation, cv::Mat trans
 	modelMatrix = makeMatrix(rvec, tvec);
 	distCoeffs = distortionCoefficients;
 
+	useDistortionShader = false;
+	for (int i = 0; i < distortionCoefficients.cols; i++) {
+		if (distortionCoefficients.at<double>(i) != 0.0) {
+			useDistortionShader = true;
+			break;
+		}
+	}
+	if (useDistortionShader) {
+		distortionShader.setUniform3f("k", ofVec3f(distortionCoefficients.at<double>(0), distortionCoefficients.at<double>(1), distortionCoefficients.at<double>(4)));
+		distortionShader.setUniform2f("p", ofVec2f(distortionCoefficients.at<double>(2), distortionCoefficients.at<double>(3)));
+	}
+
 	calibrationReady = true;
 }
 
@@ -64,12 +76,27 @@ void ofxMapamok::begin() {
 	intrinsics.loadProjectionMatrix(nearDist, farDist);
 	ofMultMatrix(modelMatrix);
 
-	ofViewport(viewport);
+	if (!useDistortionShader) {
+		ofViewport(viewport);
+	}
+	else {
+		if (distortionBuffer.getWidth() != viewport.width || distortionBuffer.getHeight() != viewport.height) {
+			distortionBuffer.allocate(viewport.width, viewport.height, GL_RGBA);
+		}
+		distortionBuffer.begin(false);
+		ofViewport(ofRectangle(0, 0, viewport.width, viewport.height));
+		ofClear(0, 0);
+	}
+
 }
 
 void ofxMapamok::end() {
 	if (!calibrationReady) {
 		return;
+	}
+
+	if (useDistortionShader) {
+		distortionBuffer.end();
 	}
 
 	// restore default viewport
@@ -79,6 +106,12 @@ void ofxMapamok::end() {
 	ofSetMatrixMode(OF_MATRIX_PROJECTION);
 	ofPopMatrix();
 	ofSetMatrixMode(OF_MATRIX_MODELVIEW);
+
+	if (useDistortionShader) {
+		distortionShader.begin();
+		distortionBuffer.draw(0, viewport.height, viewport.width, -viewport.height); // draw FBO upside-down
+		distortionShader.end();
+	}
 }
 
 ofVec3f ofxMapamok::worldToScreen(ofVec3f WorldXYZ, ofRectangle viewport) {
