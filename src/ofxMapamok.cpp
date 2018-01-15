@@ -1,5 +1,16 @@
 #include "ofxMapamok.h"
 
+ofxMapamok::ofxMapamok()
+{
+	distortionShader.setupShaderFromSource(GL_VERTEX_SHADER, distortionVertexShader);
+	distortionShader.setupShaderFromSource(GL_FRAGMENT_SHADER, distortionFragmentShader);
+
+	if (ofIsGLProgrammableRenderer()) {
+		distortionShader.bindDefaults();
+	}
+	distortionShader.linkProgram();
+}
+
 void ofxMapamok::calibrate(ofRectangle vp, vector<cv::Point2f>& imagePoints, vector<cv::Point3f>& objectPoints, int flags, float aov) {
 	int n = imagePoints.size();
 	const static int minPoints = 6;
@@ -51,8 +62,12 @@ void ofxMapamok::setData(cv::Mat1d cameraMatrix, cv::Mat rotation, cv::Mat trans
 		}
 	}
 	if (useDistortionShader) {
+		distortionShader.begin();
 		distortionShader.setUniform3f("k", ofVec3f(distortionCoefficients.at<double>(0), distortionCoefficients.at<double>(1), distortionCoefficients.at<double>(4)));
 		distortionShader.setUniform2f("p", ofVec2f(distortionCoefficients.at<double>(2), distortionCoefficients.at<double>(3)));
+		distortionShader.setUniform2f("focalLength", ofVec2f(cameraMatrix.at<double>(0, 0), cameraMatrix.at<double>(1, 1)));
+		distortionShader.setUniform2f("principalPoint", ofVec2f(cameraMatrix.at<double>(0, 2), cameraMatrix.at<double>(1, 2)) );
+		distortionShader.end();
 	}
 
 	calibrationReady = true;
