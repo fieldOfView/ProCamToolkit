@@ -124,7 +124,7 @@ void ofxMapamok::end() {
 
 	if (useDistortionShader) {
 		distortionShader.begin();
-		distortionBuffer.draw(0, viewport.height, viewport.width, -viewport.height); // draw FBO upside-down
+		distortionBuffer.draw(viewport.getLeft(), viewport.getBottom(), viewport.width, -viewport.height); // draw FBO upside-down
 		distortionShader.end();
 	}
 }
